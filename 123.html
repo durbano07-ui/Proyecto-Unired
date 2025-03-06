@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Social - Publicaciones</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffcc00;
+            padding: 10px 20px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .container {
+            width: 50%;
+            margin: 80px auto 20px;
+            padding: 20px;
+        }
+
+        .new-post {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        .new-post textarea {
+            width: 100%;
+            border: none;
+            resize: none;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .post {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-info img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+
+        .options-container {
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .options-menu {
+            display: none;
+            position: absolute;
+            top: 30px;
+            right: 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .options-menu button {
+            background: none;
+            border: none;
+            padding: 10px;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .options-menu button:hover {
+            background: #f1f1f1;
+        }
+
+        .post-footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .comment-box {
+            display: none;
+            margin-top: 10px;
+        }
+
+        .comment-box textarea {
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .comment-box button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin-top: 5px;
+            border-radius: 5px;
+        }
+
+        .comment-list {
+            margin-top: 10px;
+            padding-left: 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .comment {
+            background: #eee;
+            padding: 5px;
+            border-radius: 5px;
+            margin-top: 5px;
+        }
+
+        .post-footer button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">MiRed</div>
+    </nav>    
+
+    <div class="container">
+        <div class="new-post">
+            <textarea placeholder="¿En qué estás pensando?" rows="3"></textarea>
+            <div class="post-actions">
+                <button class="publish">Publicar</button>
+            </div>
+        </div>
+
+        <div id="post-container"></div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            cargarPublicaciones();
+        });
+
+        document.querySelector(".publish").addEventListener("click", function () {
+            let textarea = document.querySelector(".new-post textarea");
+            let contenido = textarea.value.trim();
+            if (!contenido) return;
+
+            let nuevaPublicacion = {
+                usuario: "Javier Solis",
+                contenido: contenido,
+                fecha: new Date().toLocaleString(),
+                meGusta: 0,
+                comentarios: []
+            };
+
+            let publicaciones = JSON.parse(localStorage.getItem("publicaciones")) || [];
+            publicaciones.push(nuevaPublicacion);
+            localStorage.setItem("publicaciones", JSON.stringify(publicaciones));
+
+            textarea.value = "";
+            agregarPublicacionAlDOM(nuevaPublicacion);
+        });
+
+        function cargarPublicaciones() {
+            let publicaciones = JSON.parse(localStorage.getItem("publicaciones")) || [];
+            publicaciones.forEach(pub => agregarPublicacionAlDOM(pub));
+        }
+
+        function agregarPublicacionAlDOM(publicacion) {
+            let contenedor = document.getElementById("post-container");
+            let div = document.createElement("div");
+            div.classList.add("post");
+
+            div.innerHTML = `
+                <div class="post-header">
+                    <div class="user-info">
+                        <img src="https://www.example.com/foto-perfil.jpg" alt="Foto de perfil">
+                        <div>
+                            <h3>${publicacion.usuario}</h3>
+                            <p>${publicacion.fecha}</p>
+                        </div>
+                    </div>
+                    <div class="options-container" onclick="mostrarOpciones(this)">⋮</div>
+                    <div class="options-menu">
+                        <button onclick="eliminarPublicacion(this)">Eliminar</button>
+                    </div>
+                </div>
+                <p>${publicacion.contenido}</p>
+                <div class="post-footer">
+                    <button onclick="toggleLike(this)">👍 <span>${publicacion.meGusta}</span></button>
+                    <button onclick="toggleCommentBox(this)">💬 Comentar</button>
+                    <button onclick="compartirPublicacion()">🔗 Compartir</button>
+                </div>
+                <div class="comment-box">
+                    <textarea placeholder="Escribe un comentario..."></textarea>
+                    <button onclick="agregarComentario(this)">Comentar</button>
+                </div>
+                <div class="comment-list"></div>
+            `;
+
+            contenedor.prepend(div);
+        }
+
+        function mostrarOpciones(elemento) {
+            let post = elemento.closest(".post");
+            let menu = post.querySelector(".options-menu");
+            menu.style.display = menu.style.display === "block" ? "none" : "block";
+        }
+
+        function eliminarPublicacion(btn) {
+            let post = btn.closest(".post");
+            let index = Array.from(post.parentNode.children).indexOf(post);
+            post.remove();
+
+            let publicaciones = JSON.parse(localStorage.getItem("publicaciones")) || [];
+            publicaciones.splice(index, 1);
+            localStorage.setItem("publicaciones", JSON.stringify(publicaciones));
+        }
+
+        function toggleCommentBox(btn) {
+            let commentBox = btn.closest(".post").querySelector(".comment-box");
+            commentBox.style.display = commentBox.style.display === "block" ? "none" : "block";
+        }
+
+        function agregarComentario(btn) {
+            let post = btn.closest(".post");
+            let textarea = post.querySelector(".comment-box textarea");
+            let comentario = textarea.value.trim();
+            if (!comentario) return;
+
+            let commentList = post.querySelector(".comment-list");
+            let div = document.createElement("div");
+            div.classList.add("comment");
+            div.textContent = comentario;
+            commentList.appendChild(div);
+
+            textarea.value = "";
+        }
+
+        function toggleLike(btn) {
+            let countSpan = btn.querySelector("span");
+            let count = parseInt(countSpan.textContent);
+            count++;
+            countSpan.textContent = count;
+        }
+
+        function compartirPublicacion() {
+            alert("¡Publicación compartida!");
+        }
+    </script>
+
+</body>
+</html>
