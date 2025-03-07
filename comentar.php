@@ -2,17 +2,23 @@
 require_once "Database.php";
 session_start();
 
+// Verificar si el usuario está logueado
 if (!isset($_SESSION['Id_usuario'])) {
     echo json_encode(['success' => false, 'message' => 'No estás logueado']);
     exit();
 }
 
+// Comprobar si es una solicitud POST
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['id']) && isset($_POST['comentario']) && !empty($_POST['comentario'])) {
-        $postId = $_POST['id'];
-        $comentario = $_POST['comentario'];
+    // Obtener los datos JSON enviados
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    if (isset($data['id']) && isset($data['comentario']) && !empty($data['comentario'])) {
+        $postId = $data['id'];
+        $comentario = $data['comentario'];
         $usuarioId = $_SESSION['Id_usuario'];
 
+        // Conexión a la base de datos
         $database = new Database();
         $conn = $database->getConnection();
 
@@ -32,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 // Obtener el ID del comentario insertado
                 $commentId = $stmt->insert_id;
 
-                // Obtener el nombre del usuario y la fecha del comentario
+                // Obtener el nombre del usuario que hizo el comentario
                 $userQuery = "SELECT Nombre FROM usuarios WHERE Id_usuario = ?";
                 $userStmt = $conn->prepare($userQuery);
                 $userStmt->bind_param("i", $usuarioId);
@@ -40,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $userResult = $userStmt->get_result();
                 $userData = $userResult->fetch_assoc();
 
+                // Devolver la respuesta en formato JSON
                 echo json_encode([
                     'success' => true,
                     'comment_id' => $commentId,
@@ -64,3 +71,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     echo json_encode(['success' => false, 'message' => 'Método de solicitud no válido']);
 }
 ?>
+
