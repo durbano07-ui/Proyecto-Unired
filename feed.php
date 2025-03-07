@@ -80,15 +80,33 @@ if (!$resultado) {
                 heartIcon.style.color = '#e74c3c'; // Color rojo
                 likesCount.innerHTML = parseInt(likesCount.innerHTML) + 1;
             }
-
-            // Aquí puedes agregar una llamada a AJAX o una actualización en la base de datos
-            // para registrar el like, pero no se implementa en este código estático.
         }
 
         // Mostrar el cuadro de comentario al hacer click en el botón de comentar
         function toggleCommentBox(postId) {
             let commentBox = document.getElementById('comment-box-' + postId);
             commentBox.style.display = (commentBox.style.display === 'none' || commentBox.style.display === '') ? 'block' : 'none';
+        }
+
+        // Mostrar el menú de opciones (Editar/Eliminar) de un comentario
+        function toggleCommentOptions(commentId) {
+            let optionsMenu = document.getElementById('comment-options-' + commentId);
+            optionsMenu.style.display = (optionsMenu.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // Eliminar un comentario
+        function deleteComment(commentId) {
+            if (confirm("¿Estás seguro de que quieres eliminar este comentario?")) {
+                window.location.href = "delete_comment.php?id=" + commentId;
+            }
+        }
+
+        // Editar un comentario (Mostrar el formulario de edición)
+        function editComment(commentId) {
+            let commentText = document.getElementById('comment-text-' + commentId);
+            let editBox = document.getElementById('edit-comment-box-' + commentId);
+            editBox.style.display = 'block';
+            editBox.querySelector('textarea').value = commentText.innerText;
         }
     </script>
 </head>
@@ -154,7 +172,7 @@ if (!$resultado) {
 
                     <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>">
                         <?php
-                        $comentariosQuery = "SELECT c.Contenido_C, c.Fecha_Comentario, u.Nombre 
+                        $comentariosQuery = "SELECT c.Id_comentario, c.Contenido_C, c.Fecha_Comentario, u.Nombre 
                                             FROM comentarios c 
                                             JOIN usuarios u ON c.Id_usuario = u.Id_usuario 
                                             WHERE c.Id_publicacion = ? 
@@ -165,12 +183,28 @@ if (!$resultado) {
                         $comentariosResultado = $stmtComentarios->get_result();
 
                         while ($comentario = $comentariosResultado->fetch_assoc()) {
-                            echo "<div class='comment'><strong>{$comentario['Nombre']}</strong><p>{$comentario['Contenido_C']}</p><small>{$comentario['Fecha_Comentario']}</small></div>";
+                            echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
+                                    <div class='comment-header'>
+                                        <strong>{$comentario['Nombre']}</strong>
+                                        <span onclick='toggleCommentOptions({$comentario['Id_comentario']})' class='three-dots'>
+                                            <i class='fas fa-ellipsis-v'></i>
+                                        </span>
+                                    </div>
+                                    <p id='comment-text-{$comentario['Id_comentario']}'>{$comentario['Contenido_C']}</p>
+                                    <small>{$comentario['Fecha_Comentario']}</small>
+                                    <div id='comment-options-{$comentario['Id_comentario']}' class='comment-options'>
+                                        <button onclick='editComment({$comentario['Id_comentario']})'>Editar</button>
+                                        <button onclick='deleteComment({$comentario['Id_comentario']})'>Eliminar</button>
+                                    </div>
+                                    <div id='edit-comment-box-{$comentario['Id_comentario']}' style='display:none;'>
+                                        <textarea rows='3'></textarea>
+                                        <button>Guardar</button>
+                                    </div>
+                                </div>";
                         }
                         ?>
                     </div>
 
-                    <!-- Aquí el recuadro de comentario que inicialmente está oculto -->
                     <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
                         <textarea class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
                         <button class="submit-comment" data-post-id="<?php echo $fila['Id_publicacion']; ?>">Comentar</button>
