@@ -1,3 +1,63 @@
+<?php
+require_once "Database.php";
+session_start();
+
+if (!isset($_SESSION['Id_usuario'])) {
+    header("Location: login.php");
+    exit();
+}
+
+$database = new Database();
+$conn = $database->getConnection();
+
+// Procesar la creación de la publicación
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['contenido'])) {
+    $contenido = $_POST['contenido'];
+    $usuarioId = $_SESSION['Id_usuario'];
+
+    // Manejar la carga de archivos (imagen y video)
+    $imagen_url = null;
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
+        $imagen_url = 'uploads/' . basename($_FILES['imagen']['name']);
+        move_uploaded_file($_FILES['imagen']['tmp_name'], $imagen_url);
+    }
+
+    $video_url = null;
+    if (isset($_FILES['video']) && $_FILES['video']['error'] == 0) {
+        $video_url = 'uploads/' . basename($_FILES['video']['name']);
+        move_uploaded_file($_FILES['video']['tmp_name'], $video_url);
+    }
+
+    $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion) VALUES (?, ?, ?, ?, NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    $stmtInsert->bind_param("isss", $usuarioId, $contenido, $imagen_url, $video_url);
+
+    if ($stmtInsert->execute()) {
+        header("Location: feed.php"); // Redirigir para mostrar la nueva publicación
+        exit();
+    } else {
+        echo "Error al crear la publicación.";
+    }
+}
+
+// Obtener las publicaciones
+$sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url,
+            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion) AS likes_count,
+            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion AND Id_usuario = ?) AS user_liked
+        FROM publicaciones p 
+        JOIN usuarios u ON p.Id_usuario = u.Id_usuario 
+        ORDER BY p.Fecha_Publicacion DESC";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $_SESSION['Id_usuario']);
+$stmt->execute();
+$resultado = $stmt->get_result();
+
+if (!$resultado) {
+    die("❌ Error al obtener publicaciones: " . $conn->error);
+}
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,17 +67,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script>
-        // Función para manejar el like (y deslike)
+        // Función para manejar el like
         function toggleLike(postId, likeBtn) {
             let likesCount = document.getElementById('likes-count-' + postId);
             let heartIcon = likeBtn.querySelector('i');
 
             // Cambiar el color del corazón al darle like
             if (heartIcon.style.color === 'rgb(231, 76, 60)') {
-                heartIcon.style.color = ''; // Deslike: quitar color rojo
+                heartIcon.style.color = '';
                 likesCount.innerHTML = parseInt(likesCount.innerHTML) - 1;
             } else {
-                heartIcon.style.color = '#e74c3c'; // Like: poner color rojo
+                heartIcon.style.color = '#e74c3c'; // Color rojo
                 likesCount.innerHTML = parseInt(likesCount.innerHTML) + 1;
             }
 
@@ -130,7 +190,37 @@
                     </div>
 
                     <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>">
-                        <!-- Aquí se mostrarán los comentarios -->
+                        <?php
+                        $comentariosQuery = "SELECT c.Id_comentario, c.Contenido_C, c.Fecha_Comentario, u.Nombre 
+                                            FROM comentarios c 
+                                            JOIN usuarios u ON c.Id_usuario = u.Id_usuario 
+                                            WHERE c.Id_publicacion = ? 
+                                            ORDER BY c.Fecha_Comentario ASC";
+                        $stmtComentarios = $conn->prepare($comentariosQuery);
+                        $stmtComentarios->bind_param("i", $fila['Id_publicacion']);
+                        $stmtComentarios->execute();
+                        $comentariosResultado = $stmtComentarios->get_result();
+
+                        while ($comentario = $comentariosResultado->fetch_assoc()) {
+                            echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
+                                    <div class='comment-header'>
+                                        <span onclick='toggleCommentOptions({$comentario['Id_comentario']})' class='three-dots'>
+                                            <i class='fas fa-ellipsis-v'></i>
+                                        </span>
+                                    </div>
+                                    <p id='comment-text-{$comentario['Id_comentario']}'>{$comentario['Contenido_C']}</p>
+                                    <small>{$comentario['Fecha_Comentario']}</small>
+                                    <div id='comment-options-{$comentario['Id_comentario']}' class='comment-options'>
+                                        <button onclick='editComment({$comentario['Id_comentario']})'>Editar</button>
+                                        <button onclick='deleteComment({$comentario['Id_comentario']})'>Eliminar</button>
+                                    </div>
+                                    <div id='edit-comment-box-{$comentario['Id_comentario']}' style='display:none;'>
+                                        <textarea rows='3'></textarea>
+                                        <button>Guardar</button>
+                                    </div>
+                                </div>";
+                        }
+                        ?>
                     </div>
 
                     <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
@@ -144,7 +234,6 @@
 
 </body>
 </html>
-
 
 
 
