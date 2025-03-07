@@ -1,35 +1,42 @@
-<?php
+<?<?php
 require_once "Database.php";
 session_start();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['contenido']) && !empty($_POST['contenido'])) {
-        $contenido = $_POST['contenido'];
-        $imagen_url = null;
-        $video_url = null;
+    $database = new Database();
+    $conn = $database->getConnection();
 
-        if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
-            // Aquí procesas la imagen
-            $imagen_url = 'path_to_images/' . basename($_FILES['imagen']['name']);
-            move_uploaded_file($_FILES['imagen']['tmp_name'], $imagen_url);
-        }
+    $data = json_decode(file_get_contents("php://input"), true);
+    if (isset($data['id_publicacion'])) {
+        $id_publicacion = $data['id_publicacion'];
+        $usuarioId = $_SESSION['Id_usuario'];
 
-        if (isset($_FILES['video']) && $_FILES['video']['error'] == 0) {
-            // Aquí procesas el video
-            $video_url = 'path_to_videos/' . basename($_FILES['video']['name']);
-            move_uploaded_file($_FILES['video']['tmp_name'], $video_url);
-        }
-
-        $database = new Database();
-        $conn = $database->getConnection();
-
-        $sql = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url) 
-                VALUES (?, ?, ?, ?)";
+        // Obtener el contenido de la publicación original
+        $sql = "SELECT Contenido, Imagen_url, Video_url FROM publicaciones WHERE Id_publicacion = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("isss", $_SESSION['Id_usuario'], $contenido, $imagen_url, $video_url);
+        $stmt->bind_param("i", $id_publicacion);
         $stmt->execute();
+        $result = $stmt->get_result();
 
-        header("Location: feed.php");
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $contenido = $row['Contenido'];
+            $imagen_url = $row['Imagen_url'];
+            $video_url = $row['Video_url'];
+
+            // Insertar el repost
+            $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url) VALUES (?, ?, ?, ?)";
+            $stmtInsert = $conn->prepare($sqlInsert);
+            $stmtInsert->bind_param("isss", $usuarioId, $contenido, $imagen_url, $video_url);
+            if ($stmtInsert->execute()) {
+                echo json_encode(['success' => true]);
+            } else {
+                echo json_encode(['success' => false]);
+            }
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Publicación no encontrada']);
+        }
     }
 }
 ?>
+
