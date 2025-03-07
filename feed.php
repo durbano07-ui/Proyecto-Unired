@@ -95,35 +95,45 @@ if (!$resultado) {
             commentBox.style.display = (commentBox.style.display === 'none' || commentBox.style.display === '') ? 'block' : 'none';
         }
 
-        // Función para enviar un comentario
+        // Función para enviar el comentario
         function submitComment(postId) {
-            let commentText = document.getElementById('comment-input-' + postId).value;
+            const commentText = document.getElementById('comment-input-' + postId).value.trim();
 
-            if (commentText) {
-                // Enviar el comentario a través de AJAX
-                fetch('feed.php', {
+            if (commentText !== '') {
+                // Realizar una solicitud AJAX para guardar el comentario
+                fetch('comentar.php', {
                     method: 'POST',
-                    body: JSON.stringify({ comentario: commentText, postId: postId }),
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: postId,
+                        comentario: commentText
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data) {
-                        // Agregar el nuevo comentario a la vista
+                    if (data.success) {
+                        // Crear el nuevo comentario en el HTML
                         let commentContainer = document.getElementById('comments_' + postId);
                         let newComment = document.createElement('div');
                         newComment.classList.add('comment');
                         newComment.innerHTML = `
                             <div class="comment-header">
-                                <span>${data.nombre}</span> <small>${data.fecha}</small>
+                                <strong>${data.nombre}</strong> <small>${data.fecha}</small>
                             </div>
                             <p>${data.contenido}</p>
                         `;
                         commentContainer.appendChild(newComment);
-                        
-                        // Limpiar el campo de entrada
+
+                        // Limpiar el input del comentario
                         document.getElementById('comment-input-' + postId).value = '';
+                    } else {
+                        alert(data.message); // Mostrar mensaje de error
                     }
+                })
+                .catch(error => {
+                    console.error('Error al enviar el comentario:', error);
                 });
             }
         }
@@ -204,27 +214,17 @@ if (!$resultado) {
                         while ($comentario = $comentariosResultado->fetch_assoc()) {
                             echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
                                     <div class='comment-header'>
-                                        <span onclick='toggleCommentOptions({$comentario['Id_comentario']})' class='three-dots'>
-                                            <i class='fas fa-ellipsis-v'></i>
-                                        </span>
+                                        <strong>{$comentario['Nombre']}</strong> <small>{$comentario['Fecha_Comentario']}</small>
                                     </div>
-                                    <p id='comment-text-{$comentario['Id_comentario']}'>{$comentario['Contenido_C']}</p>
-                                    <small>{$comentario['Fecha_Comentario']}</small>
-                                    <div id='comment-options-{$comentario['Id_comentario']}' class='comment-options'>
-                                        <button onclick='editComment({$comentario['Id_comentario']})'>Editar</button>
-                                        <button onclick='deleteComment({$comentario['Id_comentario']})'>Eliminar</button>
-                                    </div>
-                                    <div id='edit-comment-box-{$comentario['Id_comentario']}' style='display:none;'>
-                                        <textarea rows='3'></textarea>
-                                        <button>Guardar</button>
-                                    </div>
-                                </div>";
+                                    <p>{$comentario['Contenido_C']}</p>
+                                  </div>";
                         }
                         ?>
                     </div>
 
+                    <!-- Cuadro de entrada de comentario -->
                     <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
-                        <textarea class="comment-input" id="comment-input-<?php echo $fila['Id_publicacion']; ?>" placeholder="Escribe un comentario..." rows="3"></textarea>
+                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>" class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
                         <button class="submit-comment" onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Comentar</button>
                     </div>
                 </div>
