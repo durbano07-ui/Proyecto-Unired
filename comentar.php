@@ -8,10 +8,10 @@ if (!isset($_SESSION['Id_usuario'])) {
     exit();
 }
 
-// Obtener los datos JSON enviados
+// Obtener los datos enviados por AJAX
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Validar que los datos estén completos
+// Verificar que los datos estén completos
 if (isset($data['id']) && isset($data['comentario']) && !empty($data['comentario'])) {
     $postId = $data['id'];
     $comentario = $data['comentario'];
