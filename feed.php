@@ -66,6 +66,18 @@ if (!$resultado) {
     <title>Red Social</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .three-dots {
+            cursor: pointer;
+            margin-left: auto;
+        }
+    </style>
     <script>
         // Función para manejar el like
         function toggleLike(postId, likeBtn) {
@@ -87,6 +99,13 @@ if (!$resultado) {
                 body: JSON.stringify({ postId: postId }),
                 headers: { 'Content-Type': 'application/json' }
             });
+        }
+
+        // Función para compartir el post
+        function sharePost(postId) {
+            const postUrl = window.location.href + '?post=' + postId;
+            const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
+            window.open(shareUrl, '_blank', 'width=600,height=400');
         }
 
         // Mostrar el cuadro de comentario al hacer click en el botón de comentar
@@ -172,7 +191,7 @@ if (!$resultado) {
                         <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-comment"></i> Comentar
                         </button>
-                        <button class="share-btn">
+                        <button class="share-btn" onclick="sharePost(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-share"></i> Compartir
                         </button>
                     </div>
@@ -222,6 +241,7 @@ if (!$resultado) {
 
 </body>
 </html>
+
 
 
 
