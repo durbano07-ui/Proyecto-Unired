@@ -77,6 +77,44 @@ if (!$resultado) {
             cursor: pointer;
             margin-left: auto;
         }
+
+        .comment-options, .share-options {
+            display: none;
+            position: absolute;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .comment-options button, .share-options button {
+            display: block;
+            margin: 5px 0;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-start;
+        }
+
+        .share-btn {
+            margin-left: 10px;
+        }
+
+        .comment-input-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .comment-input-container textarea {
+            width: 80%;
+        }
+
+        .comment-input-container button {
+            width: 18%;
+        }
     </style>
     <script>
         // Función para manejar el like
@@ -101,17 +139,18 @@ if (!$resultado) {
             });
         }
 
-        // Función para compartir el post
-        function sharePost(postId) {
-            const postUrl = window.location.href + '?post=' + postId;
-            const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(postUrl)}`;
-            window.open(shareUrl, '_blank', 'width=600,height=400');
+        // Función para compartir la publicación en la misma página
+        function toggleShareOptions(postId) {
+            const shareOptions = document.getElementById('share-options-' + postId);
+            shareOptions.style.display = (shareOptions.style.display === 'block') ? 'none' : 'block';
         }
 
-        // Mostrar el cuadro de comentario al hacer click en el botón de comentar
-        function toggleCommentBox(postId) {
-            let commentBox = document.getElementById('comment-box-' + postId);
-            commentBox.style.display = (commentBox.style.display === 'none' || commentBox.style.display === '') ? 'block' : 'none';
+        function sharePost(postId) {
+            const postUrl = window.location.href + '?post=' + postId;
+            // Aquí puedes manejar la lógica de compartir, por ejemplo, copiando el enlace
+            navigator.clipboard.writeText(postUrl).then(() => {
+                alert("Enlace copiado al portapapeles.");
+            });
         }
 
         // Mostrar el menú de opciones (Editar/Eliminar) de un comentario
@@ -191,9 +230,12 @@ if (!$resultado) {
                         <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-comment"></i> Comentar
                         </button>
-                        <button class="share-btn" onclick="sharePost(<?php echo $fila['Id_publicacion']; ?>)">
+                        <button class="share-btn" onclick="toggleShareOptions(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-share"></i> Compartir
                         </button>
+                        <div id="share-options-<?php echo $fila['Id_publicacion']; ?>" class="share-options">
+                            <button onclick="sharePost(<?php echo $fila['Id_publicacion']; ?>)">Copiar enlace</button>
+                        </div>
                     </div>
 
                     <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>">
@@ -211,6 +253,7 @@ if (!$resultado) {
                         while ($comentario = $comentariosResultado->fetch_assoc()) {
                             echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
                                     <div class='comment-header'>
+                                        <span>{$comentario['Nombre']}</span>
                                         <span onclick='toggleCommentOptions({$comentario['Id_comentario']})' class='three-dots'>
                                             <i class='fas fa-ellipsis-v'></i>
                                         </span>
@@ -241,7 +284,6 @@ if (!$resultado) {
 
 </body>
 </html>
-
 
 
 
