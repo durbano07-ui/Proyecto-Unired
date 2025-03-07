@@ -40,6 +40,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['contenido'])) {
     }
 }
 
+// Procesar los comentarios
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['comentario']) && isset($_POST['postId'])) {
+    $comentario = $_POST['comentario'];
+    $postId = $_POST['postId'];
+    $usuarioId = $_SESSION['Id_usuario'];
+
+    $sqlComentario = "INSERT INTO comentarios (Id_usuario, Id_publicacion, Contenido_C, Fecha_Comentario) VALUES (?, ?, ?, NOW())";
+    $stmtComentario = $conn->prepare($sqlComentario);
+    $stmtComentario->bind_param("iis", $usuarioId, $postId, $comentario);
+
+    if ($stmtComentario->execute()) {
+        header("Location: feed.php"); // Redirigir para que se vea el nuevo comentario
+        exit();
+    } else {
+        echo "Error al agregar el comentario.";
+    }
+}
+
 // Obtener las publicaciones
 $sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url,
             (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion) AS likes_count,
@@ -115,6 +133,30 @@ if (!$resultado) {
             editBox.style.display = 'block';
             editBox.querySelector('textarea').value = commentText.innerText;
         }
+
+        // Enviar el comentario al hacer clic en el botón
+        function submitComment(postId) {
+            let commentText = document.getElementById('comment-input-' + postId).value;
+
+            if (commentText) {
+                fetch('feed.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ comentario: commentText, postId: postId }),
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();  // Recargar la página para ver el nuevo comentario
+                    }
+                });
+            }
+        }
+
+        // Función para compartir la publicación
+        function sharePost(postId) {
+            alert("¡Publicación compartida!");  // Aquí podrías implementar la lógica de compartir, como copiar el enlace o redirigir a otra página
+        }
     </script>
 </head>
 <body>
@@ -172,7 +214,8 @@ if (!$resultado) {
                         <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-comment"></i> Comentar
                         </button>
-                        <button class="share-btn">
+                        
+                        <button class="share-btn" onclick="sharePost(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-share"></i> Compartir
                         </button>
                     </div>
@@ -212,8 +255,8 @@ if (!$resultado) {
                     </div>
 
                     <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
-                        <textarea class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
-                        <button class="submit-comment" data-post-id="<?php echo $fila['Id_publicacion']; ?>">Comentar</button>
+                        <textarea class="comment-input" id="comment-input-<?php echo $fila['Id_publicacion']; ?>" placeholder="Escribe un comentario..." rows="3"></textarea>
+                        <button class="submit-comment" onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Comentar</button>
                     </div>
                 </div>
             <?php } ?>
@@ -222,6 +265,7 @@ if (!$resultado) {
 
 </body>
 </html>
+
 
 
 
