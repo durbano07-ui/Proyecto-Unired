@@ -66,6 +66,31 @@ if (!$resultado) {
     <title>Red Social</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <script>
+        // Función para manejar el like
+        function toggleLike(postId, likeBtn) {
+            let likesCount = document.getElementById('likes-count-' + postId);
+            let heartIcon = likeBtn.querySelector('i');
+
+            // Cambiar el color del corazón al darle like
+            if (heartIcon.style.color === 'rgb(231, 76, 60)') {
+                heartIcon.style.color = '';
+                likesCount.innerHTML = parseInt(likesCount.innerHTML) - 1;
+            } else {
+                heartIcon.style.color = '#e74c3c'; // Color rojo
+                likesCount.innerHTML = parseInt(likesCount.innerHTML) + 1;
+            }
+
+            // Aquí puedes agregar una llamada a AJAX o una actualización en la base de datos
+            // para registrar el like, pero no se implementa en este código estático.
+        }
+
+        // Mostrar el cuadro de comentario al hacer click en el botón de comentar
+        function toggleCommentBox(postId) {
+            let commentBox = document.getElementById('comment-box-' + postId);
+            commentBox.style.display = (commentBox.style.display === 'none' || commentBox.style.display === '') ? 'block' : 'none';
+        }
+    </script>
 </head>
 <body>
 
@@ -114,21 +139,20 @@ if (!$resultado) {
                     <?php } ?>
 
                     <div class='acciones'>
-    <button class="like-btn <?php echo ($fila['user_liked'] > 0) ? 'liked' : ''; ?>" data-id="<?php echo $fila['Id_publicacion']; ?>">
-        <i class="fas fa-heart" style="color: <?php echo ($fila['user_liked'] > 0) ? '#e74c3c' : '#fff'; ?>;"></i>
-        <div class="likes-count"><?php echo $fila['likes_count']; ?></div>
-    </button>
+                        <button class="like-btn <?php echo ($fila['user_liked'] > 0) ? 'liked' : ''; ?>" onclick="toggleLike(<?php echo $fila['Id_publicacion']; ?>, this)">
+                            <i class="fas fa-heart" style="color: <?php echo ($fila['user_liked'] > 0) ? '#e74c3c' : '#fff'; ?>;"></i>
+                            <div class="likes-count" id="likes-count-<?php echo $fila['Id_publicacion']; ?>"><?php echo $fila['likes_count']; ?></div>
+                        </button>
 
-    <button class="comment-btn" data-id='<?php echo $fila['Id_publicacion']; ?>'> 
-        <i class="fas fa-comment"></i> Comentar
-    </button>
-    <button class="share-btn"> 
-        <i class="fas fa-share"></i> Compartir
-    </button>
-</div>
+                        <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
+                            <i class="fas fa-comment"></i> Comentar
+                        </button>
+                        <button class="share-btn">
+                            <i class="fas fa-share"></i> Compartir
+                        </button>
+                    </div>
 
-
-                    <div class='comments' id='comments_<?php echo $fila['Id_publicacion']; ?>'>
+                    <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>">
                         <?php
                         $comentariosQuery = "SELECT c.Contenido_C, c.Fecha_Comentario, u.Nombre 
                                             FROM comentarios c 
@@ -146,7 +170,8 @@ if (!$resultado) {
                         ?>
                     </div>
 
-                    <div class="comment-input-container">
+                    <!-- Aquí el recuadro de comentario que inicialmente está oculto -->
+                    <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
                         <textarea class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
                         <button class="submit-comment" data-post-id="<?php echo $fila['Id_publicacion']; ?>">Comentar</button>
                     </div>
@@ -157,3 +182,4 @@ if (!$resultado) {
 
 </body>
 </html>
+
