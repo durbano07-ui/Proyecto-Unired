@@ -80,6 +80,13 @@ if (!$resultado) {
                 heartIcon.style.color = '#e74c3c'; // Color rojo
                 likesCount.innerHTML = parseInt(likesCount.innerHTML) + 1;
             }
+
+            // Enviar petición AJAX para guardar el estado del like
+            fetch('like.php', {
+                method: 'POST',
+                body: JSON.stringify({ postId: postId }),
+                headers: { 'Content-Type': 'application/json' }
+            });
         }
 
         // Mostrar el cuadro de comentario al hacer click en el botón de comentar
@@ -185,7 +192,6 @@ if (!$resultado) {
                         while ($comentario = $comentariosResultado->fetch_assoc()) {
                             echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
                                     <div class='comment-header'>
-                                        <strong>{$comentario['Nombre']}</strong>
                                         <span onclick='toggleCommentOptions({$comentario['Id_comentario']})' class='three-dots'>
                                             <i class='fas fa-ellipsis-v'></i>
                                         </span>
