@@ -185,15 +185,17 @@ if (!$resultado) {
                                            ORDER BY c.Fecha_Comentario DESC";
                         $stmtComentarios = $conn->prepare($sqlComentarios);
                         $stmtComentarios->bind_param("i", $fila['Id_publicacion']);
-                        $stmtComentarios->execute();
-                        $comentariosResult = $stmtComentarios->get_result();
-
-                        while ($comentario = $comentariosResult->fetch_assoc()) {
-                            echo "<div class='comentario'>";
-                            echo "<strong>" . htmlspecialchars($comentario['usuario_comentario']) . "</strong><br>";
-                            echo "<p>" . htmlspecialchars($comentario['Comentario']) . "</p>";
-                            echo "<small>" . $comentario['Fecha_Comentario'] . "</small>";
-                            echo "</div>";
+                        if ($stmtComentarios->execute()) {
+                            $comentariosResult = $stmtComentarios->get_result();
+                            while ($comentario = $comentariosResult->fetch_assoc()) {
+                                echo "<div class='comentario'>";
+                                echo "<strong>" . htmlspecialchars($comentario['usuario_comentario']) . "</strong><br>";
+                                echo "<p>" . htmlspecialchars($comentario['Comentario']) . "</p>";
+                                echo "<small>" . $comentario['Fecha_Comentario'] . "</small>";
+                                echo "</div>";
+                            }
+                        } else {
+                            echo "Error al obtener los comentarios.";
                         }
                         ?>
                     </div>
@@ -210,7 +212,6 @@ if (!$resultado) {
     </div>
 </body>
 </html>
-
 
 
 
