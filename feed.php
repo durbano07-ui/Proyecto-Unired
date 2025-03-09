@@ -1,60 +1,76 @@
 <?php
-require_once "Database.php";
-require_once "Post.php";
+class Post {
 
-// Obtener la conexión a la base de datos
-$database = new Database();
-$conn = $database->getConnection();
+    private $conn;
 
-// Instanciar la clase Post
-$post = new Post($conn);
-
-// Obtener las publicaciones (incluyendo las compartidas)
-$sql = "SELECT p.Id_publicacion, p.Contenido, p.Imagen_url, p.Video_url, p.Fecha_Publicacion, u.Nombre AS Usuario
-        FROM publicaciones p
-        JOIN usuarios u ON p.Id_usuario = u.Id_usuario
-        WHERE p.Id_usuario_compartido IS NULL
-        ORDER BY p.Fecha_Publicacion DESC";
-$stmt = $conn->prepare($sql);
-$stmt->execute();
-$result = $stmt->get_result();
-
-// Mostrar las publicaciones
-while ($row = $result->fetch_assoc()) {
-    echo "<div class='post'>";
-    echo "<p><strong>" . $row['Usuario'] . "</strong> publicó:</p>";
-    echo "<p>" . $row['Contenido'] . "</p>";
-    if ($row['Imagen_url']) {
-        echo "<img src='" . $row['Imagen_url'] . "' alt='Imagen de la publicación'>";
+    public function __construct($db) {
+        $this->conn = $db;
     }
-    if ($row['Video_url']) {
-        echo "<video controls><source src='" . $row['Video_url'] . "' type='video/mp4'></video>";
+
+    // Obtener comentarios de una publicación
+    public function obtenerComentarios($postId) {
+        $sql = "SELECT comentarios.Comentario, comentarios.Fecha_Comentario, usuarios.Nombre
+                FROM comentarios 
+                JOIN usuarios ON comentarios.Id_usuario = usuarios.Id_usuario
+                WHERE comentarios.Id_publicacion = ?
+                ORDER BY comentarios.Fecha_Comentario DESC";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $postId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $comentarios = array();
+        while ($row = $result->fetch_assoc()) {
+            $comentarios[] = $row;
+        }
+
+        return $comentarios;
     }
-    echo "<p><em>Publicado el: " . $row['Fecha_Publicacion'] . "</em></p>";
 
-    // Mostrar comentarios
-    $comentarios = $post->obtenerComentarios($row['Id_publicacion']);
-    echo "<div class='comentarios'>";
-    foreach ($comentarios as $comentario) {
-        echo "<p><strong>" . $comentario['Nombre'] . ":</strong> " . $comentario['Comentario'] . "<br><em>Publicado el: " . $comentario['Fecha_Comentario'] . "</em></p>";
+    // Función para compartir una publicación
+    public function compartirPublicacion($postId, $usuarioId) {
+        // Verificar si la publicación original existe
+        $sql = "SELECT Contenido, Imagen_url, Video_url FROM publicaciones WHERE Id_publicacion = ?";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("i", $postId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            $post = $result->fetch_assoc();
+
+            // Insertar la publicación compartida
+            $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion, Id_usuario_compartido) 
+                          VALUES (?, ?, ?, ?, NOW(), ?)";
+            $stmtInsert = $this->conn->prepare($sqlInsert);
+            $stmtInsert->bind_param("isssi", $usuarioId, $post['Contenido'], $post['Imagen_url'], $post['Video_url'], $usuarioId);
+
+            if ($stmtInsert->execute()) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
+        }
     }
-    echo "</div>";
 
-    // Formulario para agregar comentario
-    echo "<form method='POST' action='agregar_comentario.php'>";
-    echo "<input type='hidden' name='Id_publicacion' value='" . $row['Id_publicacion'] . "'>";
-    echo "<input type='text' name='comentario' placeholder='Escribe tu comentario...' required>";
-    echo "<button type='submit'>Comentar</button>";
-    echo "</form>";
+    // Guardar una nueva publicación
+    public function guardarPublicacion($usuarioId, $contenido, $imagenUrl, $videoUrl) {
+        $sql = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion) 
+                VALUES (?, ?, ?, ?, NOW())";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bind_param("isss", $usuarioId, $contenido, $imagenUrl, $videoUrl);
 
-    // Botón para compartir la publicación
-    echo "<form method='POST' action='compartir_publicacion.php'>";
-    echo "<input type='hidden' name='Id_publicacion' value='" . $row['Id_publicacion'] . "'>";
-    echo "<button type='submit'>Compartir</button>";
-    echo "</form>";
-
-    echo "</div>";
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
+?>
+
 ?>
 
 
