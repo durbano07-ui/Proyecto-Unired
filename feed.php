@@ -45,21 +45,16 @@ $sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.I
             (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion) AS likes_count,
             (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion AND Id_usuario = ?) AS user_liked
         FROM publicaciones p 
-        LEFT JOIN usuarios u ON p.Id_usuario = u.Id_usuario 
+        JOIN usuarios u ON p.Id_usuario = u.Id_usuario 
         ORDER BY p.Fecha_Publicacion DESC";
 
 $stmt = $conn->prepare($sql);
-if ($stmt === false) {
-    // Si hay un error en la preparación de la consulta, se muestra el error.
-    die('Error en la preparación de la consulta: ' . $conn->error);
-}
 $stmt->bind_param("i", $_SESSION['Id_usuario']);
 $stmt->execute();
 $resultado = $stmt->get_result();
 
-if ($resultado === false) {
-    // Si la ejecución de la consulta falla, se muestra el error.
-    die('Error al obtener publicaciones: ' . $stmt->error);
+if (!$resultado) {
+    die("❌ Error al obtener publicaciones: " . $conn->error);
 }
 ?>
 
@@ -91,27 +86,6 @@ if ($resultado === false) {
                 method: 'POST',
                 body: JSON.stringify({ postId: postId }),
                 headers: { 'Content-Type': 'application/json' }
-            });
-        }
-
-        // Función para compartir una publicación
-        function sharePost(postId) {
-            fetch('guardar_publicacion.php', {
-                method: 'POST',
-                body: JSON.stringify({ id_publicacion: postId }),
-                headers: { 'Content-Type': 'application/json' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Aquí podemos mostrar la publicación compartida como un repost.
-                    window.location.reload(); // Recargar la página para reflejar el repost.
-                } else {
-                    alert("Error al compartir la publicación.");
-                }
-            })
-            .catch(error => {
-                console.error('Error al compartir la publicación:', error);
             });
         }
 
@@ -162,6 +136,27 @@ if ($resultado === false) {
                     console.error('Error al enviar el comentario:', error);
                 });
             }
+        }
+
+        // Función para compartir la publicación
+        function sharePost(postId) {
+            fetch('guardar_publicacion.php', {
+                method: 'POST',
+                body: JSON.stringify({ id_publicacion: postId }),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recargar la página para reflejar el repost.
+                    window.location.reload();
+                } else {
+                    alert("Error al compartir la publicación.");
+                }
+            })
+            .catch(error => {
+                console.error('Error al compartir la publicación:', error);
+            });
         }
     </script>
 </head>
@@ -238,28 +233,28 @@ if ($resultado === false) {
                         $comentariosResultado = $stmtComentarios->get_result();
 
                         while ($comentario = $comentariosResultado->fetch_assoc()) {
+                            echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
+                                    <div class='comment-header'>
+                                        <strong>{$comentario['Nombre']}</strong> <small>{$comentario['Fecha_Comentario']}</small>
+                                    </div>
+                                    <p>{$comentario['Contenido_C']}</p>
+                                  </div>";
+                        }
                         ?>
-                            <div class="comment">
-                                <div class="comment-header">
-                                    <strong><?php echo htmlspecialchars($comentario['Nombre']); ?></strong>
-                                    <small><?php echo $comentario['Fecha_Comentario']; ?></small>
-                                </div>
-                                <p><?php echo htmlspecialchars($comentario['Contenido_C']); ?></p>
-                            </div>
-                        <?php } ?>
                     </div>
 
-                    <div class="comment-box" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
-                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>" placeholder="Escribe un comentario..."></textarea>
-                        <button onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Enviar</button>
+                    <!-- Cuadro de entrada de comentario -->
+                    <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
+                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>"></textarea>
+                        <button onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Comentar</button>
                     </div>
                 </div>
             <?php } ?>
         </div>
     </div>
-
 </body>
 </html>
+
 
 
 
