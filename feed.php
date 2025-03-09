@@ -1,76 +1,242 @@
 <?php
-class Post {
+require_once "Database.php";
+session_start();
 
-    private $conn;
+if (!isset($_SESSION['Id_usuario'])) {
+    header("Location: login.php");
+    exit();
+}
 
-    public function __construct($db) {
-        $this->conn = $db;
+$database = new Database();
+$conn = $database->getConnection();
+
+// Procesar la creación de la publicación
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['contenido'])) {
+    $contenido = $_POST['contenido'];
+    $usuarioId = $_SESSION['Id_usuario'];
+
+    // Manejar la carga de archivos (imagen y video)
+    $imagen_url = null;
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
+        $imagen_url = 'uploads/' . basename($_FILES['imagen']['name']);
+        move_uploaded_file($_FILES['imagen']['tmp_name'], $imagen_url);
     }
 
-    // Obtener comentarios de una publicación
-    public function obtenerComentarios($postId) {
-        $sql = "SELECT comentarios.Comentario, comentarios.Fecha_Comentario, usuarios.Nombre
-                FROM comentarios 
-                JOIN usuarios ON comentarios.Id_usuario = usuarios.Id_usuario
-                WHERE comentarios.Id_publicacion = ?
-                ORDER BY comentarios.Fecha_Comentario DESC";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $postId);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        $comentarios = array();
-        while ($row = $result->fetch_assoc()) {
-            $comentarios[] = $row;
-        }
-
-        return $comentarios;
+    $video_url = null;
+    if (isset($_FILES['video']) && $_FILES['video']['error'] == 0) {
+        $video_url = 'uploads/' . basename($_FILES['video']['name']);
+        move_uploaded_file($_FILES['video']['tmp_name'], $video_url);
     }
 
-    // Función para compartir una publicación
-    public function compartirPublicacion($postId, $usuarioId) {
-        // Verificar si la publicación original existe
-        $sql = "SELECT Contenido, Imagen_url, Video_url FROM publicaciones WHERE Id_publicacion = ?";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("i", $postId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+    $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion) VALUES (?, ?, ?, ?, NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    $stmtInsert->bind_param("isss", $usuarioId, $contenido, $imagen_url, $video_url);
 
-        if ($result->num_rows > 0) {
-            $post = $result->fetch_assoc();
-
-            // Insertar la publicación compartida
-            $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion, Id_usuario_compartido) 
-                          VALUES (?, ?, ?, ?, NOW(), ?)";
-            $stmtInsert = $this->conn->prepare($sqlInsert);
-            $stmtInsert->bind_param("isssi", $usuarioId, $post['Contenido'], $post['Imagen_url'], $post['Video_url'], $usuarioId);
-
-            if ($stmtInsert->execute()) {
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+    if ($stmtInsert->execute()) {
+        header("Location: feed.php"); // Redirigir para mostrar la nueva publicación
+        exit();
+    } else {
+        echo "Error al crear la publicación.";
     }
+}
 
-    // Guardar una nueva publicación
-    public function guardarPublicacion($usuarioId, $contenido, $imagenUrl, $videoUrl) {
-        $sql = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion) 
-                VALUES (?, ?, ?, ?, NOW())";
-        $stmt = $this->conn->prepare($sql);
-        $stmt->bind_param("isss", $usuarioId, $contenido, $imagenUrl, $videoUrl);
+// Obtener las publicaciones
+$sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url,
+            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion) AS likes_count,
+            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion AND Id_usuario = ?) AS user_liked
+        FROM publicaciones p 
+        JOIN usuarios u ON p.Id_usuario = u.Id_usuario 
+        ORDER BY p.Fecha_Publicacion DESC";
 
-        if ($stmt->execute()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $_SESSION['Id_usuario']);
+$stmt->execute();
+$resultado = $stmt->get_result();
+
+if (!$resultado) {
+    die("❌ Error al obtener publicaciones: " . $conn->error);
 }
 ?>
 
-?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Social</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script>
+        // Función para manejar el like
+        function toggleLike(postId, likeBtn) {
+            let likesCount = document.getElementById('likes-count-' + postId);
+            let heartIcon = likeBtn.querySelector('i');
+
+            // Cambiar el color del corazón al darle like
+            if (heartIcon.style.color === 'rgb(231, 76, 60)') {
+                heartIcon.style.color = '';
+                likesCount.innerHTML = parseInt(likesCount.innerHTML) - 1;
+            } else {
+                heartIcon.style.color = '#e74c3c'; // Color rojo
+                likesCount.innerHTML = parseInt(likesCount.innerHTML) + 1;
+            }
+
+            // Enviar petición AJAX para guardar el estado del like
+            fetch('like.php', {
+                method: 'POST',
+                body: JSON.stringify({ postId: postId }),
+                headers: { 'Content-Type': 'application/json' }
+            });
+        }
+
+        // Mostrar el cuadro de comentario al hacer click en el botón de comentar
+        function toggleCommentBox(postId) {
+            let commentBox = document.getElementById('comment-box-' + postId);
+            commentBox.style.display = (commentBox.style.display === 'none' || commentBox.style.display === '') ? 'block' : 'none';
+        }
+
+        // Función para enviar el comentario
+        function submitComment(postId) {
+            const commentText = document.getElementById('comment-input-' + postId).value.trim();
+
+            if (commentText !== '') {
+                // Realizar una solicitud AJAX para guardar el comentario
+                fetch('comentar.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: postId,
+                        comentario: commentText
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Crear el nuevo comentario en el HTML
+                        let commentContainer = document.getElementById('comments_' + postId);
+                        let newComment = document.createElement('div');
+                        newComment.classList.add('comment');
+                        newComment.innerHTML = `
+                            <div class="comment-header">
+                                <strong>${data.nombre}</strong> <small>${data.fecha}</small>
+                            </div>
+                            <p>${data.contenido}</p>
+                        `;
+                        commentContainer.appendChild(newComment);
+
+                        // Limpiar el input del comentario
+                        document.getElementById('comment-input-' + postId).value = '';
+                    } else {
+                        alert(data.message); // Mostrar mensaje de error
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al enviar el comentario:', error);
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Bienvenido, <?php echo $_SESSION['nombre']; ?> </h2>
+        <a href="logout.php">Cerrar Sesión</a>
+        
+        <h2>Crear Publicación</h2>
+        <form action="feed.php" method="post" enctype="multipart/form-data">
+            <textarea name="contenido" placeholder="Escribe tu publicación..."></textarea>
+
+            <!-- Botón para seleccionar imagen -->
+            <label for="imagenUpload" class="file-label">
+                <i class="fas fa-image"></i> Subir Imagen
+            </label>
+            <input type="file" id="imagenUpload" name="imagen" accept="image/*" style="display: none;">
+
+            <!-- Botón para seleccionar video -->
+            <label for="videoUpload" class="file-label">
+                <i class="fas fa-video"></i> Subir Video
+            </label>
+            <input type="file" id="videoUpload" name="video" accept="video/*" style="display: none;">
+
+            <button type="submit">Publicar</button>
+        </form>
+
+        <h3>Publicaciones</h3>
+        <div id="feed">
+            <?php while ($fila = $resultado->fetch_assoc()) { ?>
+                <div class='publicacion' id='post_<?php echo $fila['Id_publicacion']; ?>'>
+                    <div class="header">
+                        <div class="header-left">
+                            <p><strong><?php echo htmlspecialchars($fila['Nombre']); ?></strong></p>
+                            <small><?php echo $fila['Fecha_Publicacion']; ?></small>
+                        </div>
+                    </div>
+                    <p><?php echo htmlspecialchars($fila['Contenido']); ?></p>
+
+                    <?php if (!empty($fila['Imagen_url'])) { ?>
+                        <img src='<?php echo htmlspecialchars($fila['Imagen_url']); ?>' alt='Imagen'>
+                    <?php } ?>
+                    <?php if (!empty($fila['Video_url'])) { ?>
+                        <video controls>
+                            <source src='<?php echo htmlspecialchars($fila['Video_url']); ?>' type='video/mp4'>
+                        </video>
+                    <?php } ?>
+
+                    <div class='acciones'>
+                        <button class="like-btn <?php echo ($fila['user_liked'] > 0) ? 'liked' : ''; ?>" onclick="toggleLike(<?php echo $fila['Id_publicacion']; ?>, this)">
+                            <i class="fas fa-heart" style="color: <?php echo ($fila['user_liked'] > 0) ? '#e74c3c' : '#fff'; ?>;"></i>
+                            <div class="likes-count" id="likes-count-<?php echo $fila['Id_publicacion']; ?>"><?php echo $fila['likes_count']; ?></div>
+                        </button>
+
+                        <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
+                            <i class="fas fa-comment"></i> Comentar
+                        </button>
+                        <button class="share-btn">
+                            <i class="fas fa-share"></i> Compartir
+                        </button>
+                    </div>
+
+                    <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>">
+                        <?php
+                        $comentariosQuery = "SELECT c.Id_comentario, c.Contenido_C, c.Fecha_Comentario, u.Nombre 
+                                            FROM comentarios c 
+                                            JOIN usuarios u ON c.Id_usuario = u.Id_usuario 
+                                            WHERE c.Id_publicacion = ? 
+                                            ORDER BY c.Fecha_Comentario ASC";
+                        $stmtComentarios = $conn->prepare($comentariosQuery);
+                        $stmtComentarios->bind_param("i", $fila['Id_publicacion']);
+                        $stmtComentarios->execute();
+                        $comentariosResultado = $stmtComentarios->get_result();
+
+                        while ($comentario = $comentariosResultado->fetch_assoc()) {
+                            echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
+                                    <div class='comment-header'>
+                                        <strong>{$comentario['Nombre']}</strong> <small>{$comentario['Fecha_Comentario']}</small>
+                                    </div>
+                                    <p>{$comentario['Contenido_C']}</p>
+                                  </div>";
+                        }
+                        ?>
+                    </div>
+
+                    <!-- Cuadro de entrada de comentario -->
+                    <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
+                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>" class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
+                        <button class="submit-comment" onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Comentar</button>
+                    </div>
+                </div>
+            <?php } ?>
+        </div>
+    </div>
+
+</body>
+</html>
+
+
+
+
 
 
