@@ -173,6 +173,37 @@ if (!$resultado) {
                             <i class="fas fa-share"></i> Compartir
                         </button>
                     </div>
+
+                    <!-- Sección de comentarios -->
+                    <h4>Comentarios</h4>
+                    <div class="comentarios">
+                        <?php
+                        $sqlComentarios = "SELECT c.Comentario, u.Nombre AS usuario_comentario, c.Fecha_Comentario
+                                           FROM comentarios c
+                                           JOIN usuarios u ON c.Id_usuario = u.Id_usuario
+                                           WHERE c.Id_publicacion = ?
+                                           ORDER BY c.Fecha_Comentario DESC";
+                        $stmtComentarios = $conn->prepare($sqlComentarios);
+                        $stmtComentarios->bind_param("i", $fila['Id_publicacion']);
+                        $stmtComentarios->execute();
+                        $comentariosResult = $stmtComentarios->get_result();
+
+                        while ($comentario = $comentariosResult->fetch_assoc()) {
+                            echo "<div class='comentario'>";
+                            echo "<strong>" . htmlspecialchars($comentario['usuario_comentario']) . "</strong><br>";
+                            echo "<p>" . htmlspecialchars($comentario['Comentario']) . "</p>";
+                            echo "<small>" . $comentario['Fecha_Comentario'] . "</small>";
+                            echo "</div>";
+                        }
+                        ?>
+                    </div>
+
+                    <!-- Formulario de comentarios -->
+                    <form action="comentarios.php" method="post">
+                        <input type="hidden" name="Id_publicacion" value="<?php echo $fila['Id_publicacion']; ?>">
+                        <textarea name="comentario" placeholder="Escribe un comentario..."></textarea>
+                        <button type="submit">Comentar</button>
+                    </form>
                 </div>
             <?php } ?>
         </div>
