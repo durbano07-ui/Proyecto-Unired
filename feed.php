@@ -137,6 +137,41 @@ if (!$resultado) {
                 });
             }
         }
+
+        // Función para manejar el repost (compartir la publicación)
+        function sharePost(postId) {
+            fetch('compartir.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ postId: postId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Agregar el repost al feed
+                    let feed = document.getElementById('feed');
+                    let repost = document.createElement('div');
+                    repost.classList.add('publicacion');
+                    repost.innerHTML = `
+                        <div class="header">
+                            <div class="header-left">
+                                <p><strong>${data.nombre} (Repost)</strong></p>
+                                <small>${data.fecha}</small>
+                            </div>
+                        </div>
+                        <p>${data.contenido}</p>
+                        ${data.imagen ? `<img src="${data.imagen}" alt="Imagen">` : ''}
+                        ${data.video ? `<video controls><source src="${data.video}" type="video/mp4"></video>` : ''}
+                    `;
+                    feed.prepend(repost); // Insertar el repost al inicio del feed
+                } else {
+                    alert('Error al compartir la publicación.');
+                }
+            })
+            .catch(error => console.error('Error al compartir:', error));
+        }
     </script>
 </head>
 <body>
@@ -194,38 +229,34 @@ if (!$resultado) {
                         <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-comment"></i> Comentar
                         </button>
-                        <button class="share-btn">
+                        <button class="share-btn" onclick="sharePost(<?php echo $fila['Id_publicacion']; ?>)">
                             <i class="fas fa-share"></i> Compartir
                         </button>
                     </div>
 
                     <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>">
                         <?php
-                        $comentariosQuery = "SELECT c.Id_comentario, c.Contenido_C, c.Fecha_Comentario, u.Nombre 
-                                            FROM comentarios c 
-                                            JOIN usuarios u ON c.Id_usuario = u.Id_usuario 
-                                            WHERE c.Id_publicacion = ? 
-                                            ORDER BY c.Fecha_Comentario ASC";
-                        $stmtComentarios = $conn->prepare($comentariosQuery);
-                        $stmtComentarios->bind_param("i", $fila['Id_publicacion']);
-                        $stmtComentarios->execute();
-                        $comentariosResultado = $stmtComentarios->get_result();
-
-                        while ($comentario = $comentariosResultado->fetch_assoc()) {
-                            echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
-                                    <div class='comment-header'>
-                                        <strong>{$comentario['Nombre']}</strong> <small>{$comentario['Fecha_Comentario']}</small>
-                                    </div>
-                                    <p>{$comentario['Contenido_C']}</p>
-                                  </div>";
+                        $comentariosQuery = "SELECT c.Id_comentario, c.Comentario, u.Nombre, c.Fecha_Comentario 
+                                             FROM comentarios c 
+                                             JOIN usuarios u ON c.Id_usuario = u.Id_usuario 
+                                             WHERE c.Id_publicacion = ? ORDER BY c.Fecha_Comentario ASC";
+                        $comentariosStmt = $conn->prepare($comentariosQuery);
+                        $comentariosStmt->bind_param("i", $fila['Id_publicacion']);
+                        $comentariosStmt->execute();
+                        $comentarios = $comentariosStmt->get_result();
+                        
+                        while ($comentario = $comentarios->fetch_assoc()) {
+                            echo "<div class='comment'>";
+                            echo "<div class='comment-header'><strong>" . htmlspecialchars($comentario['Nombre']) . "</strong> <small>" . $comentario['Fecha_Comentario'] . "</small></div>";
+                            echo "<p>" . htmlspecialchars($comentario['Comentario']) . "</p>";
+                            echo "</div>";
                         }
                         ?>
                     </div>
 
-                    <!-- Cuadro de entrada de comentario -->
-                    <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
-                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>" class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
-                        <button class="submit-comment" onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Comentar</button>
+                    <div class="comment-box" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display: none;">
+                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>" placeholder="Escribe un comentario..."></textarea>
+                        <button onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Enviar</button>
                     </div>
                 </div>
             <?php } ?>
@@ -234,7 +265,6 @@ if (!$resultado) {
 
 </body>
 </html>
-
 
 
 
