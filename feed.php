@@ -10,13 +10,46 @@ if (!isset($_SESSION['Id_usuario'])) {
 $database = new Database();
 $conn = $database->getConnection();
 
+// Procesar la creación de la publicación
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['contenido'])) {
+    $contenido = $_POST['contenido'];
+    $usuarioId = $_SESSION['Id_usuario'];
+
+    // Manejar la carga de archivos (imagen y video)
+    $imagen_url = null;
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] == 0) {
+        $imagen_url = 'uploads/' . basename($_FILES['imagen']['name']);
+        move_uploaded_file($_FILES['imagen']['tmp_name'], $imagen_url);
+    }
+
+    $video_url = null;
+    if (isset($_FILES['video']) && $_FILES['video']['error'] == 0) {
+        $video_url = 'uploads/' . basename($_FILES['video']['name']);
+        move_uploaded_file($_FILES['video']['tmp_name'], $video_url);
+    }
+
+    $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion) VALUES (?, ?, ?, ?, NOW())";
+    $stmtInsert = $conn->prepare($sqlInsert);
+    $stmtInsert->bind_param("isss", $usuarioId, $contenido, $imagen_url, $video_url);
+
+    if ($stmtInsert->execute()) {
+        header("Location: feed.php"); // Redirigir para mostrar la nueva publicación
+        exit();
+    } else {
+        echo "Error al crear la publicación.";
+    }
+}
+
 // Obtener las publicaciones
-$sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url 
+$sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url,
+            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion) AS likes_count,
+            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion AND Id_usuario = ?) AS user_liked
         FROM publicaciones p 
         JOIN usuarios u ON p.Id_usuario = u.Id_usuario 
         ORDER BY p.Fecha_Publicacion DESC";
 
 $stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $_SESSION['Id_usuario']);
 $stmt->execute();
 $resultado = $stmt->get_result();
 
@@ -34,78 +67,73 @@ if (!$resultado) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script>
-        // Función para compartir una publicación
-        function compartirPublicacion(postId, nombreAutor) {
-            fetch('compartir.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ postId: postId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    let feed = document.getElementById('feed');
-                    let sharedPost = document.createElement('div');
-                    sharedPost.classList.add('publicacion');
-                    sharedPost.innerHTML = `
-                        <div class="header">
-                            <p><strong>${data.compartido_por} compartió una publicación de ${nombreAutor}</strong></p>
-                            <small>${data.fecha_compartida}</small>
-                        </div>
-                        <p>${data.contenido}</p>
-                        ${data.imagen ? `<img src="${data.imagen}" alt="Imagen">` : ''}
-                        ${data.video ? `<video controls><source src="${data.video}" type="video/mp4"></video>` : ''}
-                    `;
-                    feed.prepend(sharedPost);
-                    alert('Publicación compartida correctamente.');
-                } else {
-                    alert('Error al compartir la publicación.');
-                }
-            })
-            .catch(error => console.error('Error al compartir:', error));
-        }
+        // Función para manejar el like
+        function toggleLike(postId, likeBtn) {
+            let likesCount = document.getElementById('likes-count-' + postId);
+            let heartIcon = likeBtn.querySelector('i');
 
-        // Mostrar opciones en los comentarios (tres puntos)
-        function toggleCommentOptions(commentId) {
-            let menu = document.getElementById('comment-menu-' + commentId);
-            menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
-        }
+            // Cambiar el color del corazón al darle like
+            if (heartIcon.style.color === 'rgb(231, 76, 60)') {
+                heartIcon.style.color = '';
+                likesCount.innerHTML = parseInt(likesCount.innerHTML) - 1;
+            } else {
+                heartIcon.style.color = '#e74c3c'; // Color rojo
+                likesCount.innerHTML = parseInt(likesCount.innerHTML) + 1;
+            }
 
-        // Eliminar un comentario
-        function eliminarComentario(commentId) {
-            fetch('eliminar_comentario.php', {
+            // Enviar petición AJAX para guardar el estado del like
+            fetch('like.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ commentId: commentId })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('comment_' + commentId).remove();
-                } else {
-                    alert('Error al eliminar comentario.');
-                }
+                body: JSON.stringify({ postId: postId }),
+                headers: { 'Content-Type': 'application/json' }
             });
         }
 
-        // Editar un comentario
-        function editarComentario(commentId) {
-            let commentText = document.getElementById('comment-text-' + commentId);
-            let nuevoComentario = prompt("Edita tu comentario:", commentText.innerHTML);
+        // Mostrar el cuadro de comentario al hacer click en el botón de comentar
+        function toggleCommentBox(postId) {
+            let commentBox = document.getElementById('comment-box-' + postId);
+            commentBox.style.display = (commentBox.style.display === 'none' || commentBox.style.display === '') ? 'block' : 'none';
+        }
 
-            if (nuevoComentario) {
-                fetch('editar_comentario.php', {
+        // Función para enviar el comentario
+        function submitComment(postId) {
+            const commentText = document.getElementById('comment-input-' + postId).value.trim();
+
+            if (commentText !== '') {
+                // Realizar una solicitud AJAX para guardar el comentario
+                fetch('comentar.php', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ commentId: commentId, contenido: nuevoComentario })
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: postId,
+                        comentario: commentText
+                    })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        commentText.innerHTML = nuevoComentario;
+                        // Crear el nuevo comentario en el HTML
+                        let commentContainer = document.getElementById('comments_' + postId);
+                        let newComment = document.createElement('div');
+                        newComment.classList.add('comment');
+                        newComment.innerHTML = `
+                            <div class="comment-header">
+                                <strong>${data.nombre}</strong> <small>${data.fecha}</small>
+                            </div>
+                            <p>${data.contenido}</p>
+                        `;
+                        commentContainer.appendChild(newComment);
+
+                        // Limpiar el input del comentario
+                        document.getElementById('comment-input-' + postId).value = '';
                     } else {
-                        alert('Error al editar comentario.');
+                        alert(data.message); // Mostrar mensaje de error
                     }
+                })
+                .catch(error => {
+                    console.error('Error al enviar el comentario:', error);
                 });
             }
         }
@@ -118,14 +146,16 @@ if (!$resultado) {
         <a href="logout.php">Cerrar Sesión</a>
         
         <h2>Crear Publicación</h2>
-        <form action="publicar.php" method="post" enctype="multipart/form-data">
+        <form action="feed.php" method="post" enctype="multipart/form-data">
             <textarea name="contenido" placeholder="Escribe tu publicación..."></textarea>
 
+            <!-- Botón para seleccionar imagen -->
             <label for="imagenUpload" class="file-label">
                 <i class="fas fa-image"></i> Subir Imagen
             </label>
             <input type="file" id="imagenUpload" name="imagen" accept="image/*" style="display: none;">
 
+            <!-- Botón para seleccionar video -->
             <label for="videoUpload" class="file-label">
                 <i class="fas fa-video"></i> Subir Video
             </label>
@@ -156,7 +186,15 @@ if (!$resultado) {
                     <?php } ?>
 
                     <div class='acciones'>
-                        <button class="share-btn" onclick="compartirPublicacion(<?php echo $fila['Id_publicacion']; ?>, '<?php echo htmlspecialchars($fila['Nombre']); ?>')">
+                        <button class="like-btn <?php echo ($fila['user_liked'] > 0) ? 'liked' : ''; ?>" onclick="toggleLike(<?php echo $fila['Id_publicacion']; ?>, this)">
+                            <i class="fas fa-heart" style="color: <?php echo ($fila['user_liked'] > 0) ? '#e74c3c' : '#fff'; ?>;"></i>
+                            <div class="likes-count" id="likes-count-<?php echo $fila['Id_publicacion']; ?>"><?php echo $fila['likes_count']; ?></div>
+                        </button>
+
+                        <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
+                            <i class="fas fa-comment"></i> Comentar
+                        </button>
+                        <button class="share-btn">
                             <i class="fas fa-share"></i> Compartir
                         </button>
                     </div>
@@ -177,16 +215,17 @@ if (!$resultado) {
                             echo "<div class='comment' id='comment_{$comentario['Id_comentario']}'>
                                     <div class='comment-header'>
                                         <strong>{$comentario['Nombre']}</strong> <small>{$comentario['Fecha_Comentario']}</small>
-                                        <div class='comment-options' onclick='toggleCommentOptions({$comentario['Id_comentario']})'>⋮</div>
-                                        <div class='comment-menu' id='comment-menu-{$comentario['Id_comentario']}' style='display: none;'>
-                                            <button onclick='editarComentario({$comentario['Id_comentario']})'>Editar</button>
-                                            <button onclick='eliminarComentario({$comentario['Id_comentario']})'>Eliminar</button>
-                                        </div>
                                     </div>
-                                    <p id='comment-text-{$comentario['Id_comentario']}'>{$comentario['Contenido_C']}</p>
+                                    <p>{$comentario['Contenido_C']}</p>
                                   </div>";
                         }
                         ?>
+                    </div>
+
+                    <!-- Cuadro de entrada de comentario -->
+                    <div class="comment-input-container" id="comment-box-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
+                        <textarea id="comment-input-<?php echo $fila['Id_publicacion']; ?>" class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
+                        <button class="submit-comment" onclick="submitComment(<?php echo $fila['Id_publicacion']; ?>)">Comentar</button>
                     </div>
                 </div>
             <?php } ?>
@@ -195,6 +234,8 @@ if (!$resultado) {
 
 </body>
 </html>
+
+
 
 
 
