@@ -10,17 +10,19 @@ if (!isset($_SESSION['Id_usuario'])) {
 $database = new Database();
 $conn = $database->getConnection();
 
-$sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url,
-            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion) AS likes_count,
-            (SELECT COUNT(*) FROM likes WHERE Id_publicacion = p.Id_publicacion AND Id_usuario = ?) AS user_liked
+// Obtener las publicaciones
+$sql = "SELECT p.Id_publicacion, p.Contenido, u.Nombre, p.Fecha_Publicacion, p.Imagen_url, p.Video_url 
         FROM publicaciones p 
         JOIN usuarios u ON p.Id_usuario = u.Id_usuario 
         ORDER BY p.Fecha_Publicacion DESC";
 
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $_SESSION['Id_usuario']);
 $stmt->execute();
 $resultado = $stmt->get_result();
+
+if (!$resultado) {
+    die("❌ Error al obtener publicaciones: " . $conn->error);
+}
 ?>
 
 <!DOCTYPE html>
@@ -32,7 +34,8 @@ $resultado = $stmt->get_result();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <script>
-        function compartirPublicacion(postId) {
+        // Función para compartir una publicación
+        function compartirPublicacion(postId, nombreAutor) {
             fetch('compartir.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -41,8 +44,20 @@ $resultado = $stmt->get_result();
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+                    let feed = document.getElementById('feed');
+                    let sharedPost = document.createElement('div');
+                    sharedPost.classList.add('publicacion');
+                    sharedPost.innerHTML = `
+                        <div class="header">
+                            <p><strong>${data.compartido_por} compartió una publicación de ${nombreAutor}</strong></p>
+                            <small>${data.fecha_compartida}</small>
+                        </div>
+                        <p>${data.contenido}</p>
+                        ${data.imagen ? `<img src="${data.imagen}" alt="Imagen">` : ''}
+                        ${data.video ? `<video controls><source src="${data.video}" type="video/mp4"></video>` : ''}
+                    `;
+                    feed.prepend(sharedPost);
                     alert('Publicación compartida correctamente.');
-                    location.reload();
                 } else {
                     alert('Error al compartir la publicación.');
                 }
@@ -50,11 +65,13 @@ $resultado = $stmt->get_result();
             .catch(error => console.error('Error al compartir:', error));
         }
 
+        // Mostrar opciones en los comentarios (tres puntos)
         function toggleCommentOptions(commentId) {
             let menu = document.getElementById('comment-menu-' + commentId);
             menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
         }
 
+        // Eliminar un comentario
         function eliminarComentario(commentId) {
             fetch('eliminar_comentario.php', {
                 method: 'POST',
@@ -71,6 +88,7 @@ $resultado = $stmt->get_result();
             });
         }
 
+        // Editar un comentario
         function editarComentario(commentId) {
             let commentText = document.getElementById('comment-text-' + commentId);
             let nuevoComentario = prompt("Edita tu comentario:", commentText.innerHTML);
@@ -94,14 +112,37 @@ $resultado = $stmt->get_result();
     </script>
 </head>
 <body>
+
     <div class="container">
+        <h2>Bienvenido, <?php echo $_SESSION['nombre']; ?> </h2>
+        <a href="logout.php">Cerrar Sesión</a>
+        
+        <h2>Crear Publicación</h2>
+        <form action="publicar.php" method="post" enctype="multipart/form-data">
+            <textarea name="contenido" placeholder="Escribe tu publicación..."></textarea>
+
+            <label for="imagenUpload" class="file-label">
+                <i class="fas fa-image"></i> Subir Imagen
+            </label>
+            <input type="file" id="imagenUpload" name="imagen" accept="image/*" style="display: none;">
+
+            <label for="videoUpload" class="file-label">
+                <i class="fas fa-video"></i> Subir Video
+            </label>
+            <input type="file" id="videoUpload" name="video" accept="video/*" style="display: none;">
+
+            <button type="submit">Publicar</button>
+        </form>
+
         <h3>Publicaciones</h3>
         <div id="feed">
             <?php while ($fila = $resultado->fetch_assoc()) { ?>
                 <div class='publicacion' id='post_<?php echo $fila['Id_publicacion']; ?>'>
                     <div class="header">
-                        <p><strong><?php echo htmlspecialchars($fila['Nombre']); ?></strong></p>
-                        <small><?php echo $fila['Fecha_Publicacion']; ?></small>
+                        <div class="header-left">
+                            <p><strong><?php echo htmlspecialchars($fila['Nombre']); ?></strong></p>
+                            <small><?php echo $fila['Fecha_Publicacion']; ?></small>
+                        </div>
                     </div>
                     <p><?php echo htmlspecialchars($fila['Contenido']); ?></p>
 
@@ -115,7 +156,7 @@ $resultado = $stmt->get_result();
                     <?php } ?>
 
                     <div class='acciones'>
-                        <button class="share-btn" onclick="compartirPublicacion(<?php echo $fila['Id_publicacion']; ?>)">
+                        <button class="share-btn" onclick="compartirPublicacion(<?php echo $fila['Id_publicacion']; ?>, '<?php echo htmlspecialchars($fila['Nombre']); ?>')">
                             <i class="fas fa-share"></i> Compartir
                         </button>
                     </div>
@@ -147,19 +188,13 @@ $resultado = $stmt->get_result();
                         }
                         ?>
                     </div>
-
-                    <div class="comment-input-container">
-                        <textarea class="comment-input" placeholder="Escribe un comentario..." rows="3"></textarea>
-                        <button class="submit-comment">Comentar</button>
-                    </div>
                 </div>
             <?php } ?>
         </div>
     </div>
+
 </body>
 </html>
-
-
 
 
 
