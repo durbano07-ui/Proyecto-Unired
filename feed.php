@@ -124,17 +124,20 @@ if (!$resultado) {
                         <?php } ?>
 
                         <div class='acciones'>
-                            <button class="like-btn <?php echo ($fila['user_liked'] > 0) ? 'liked' : ''; ?>" onclick="toggleLike(<?php echo $fila['Id_publicacion']; ?>, this)">
-                                <i class="fas fa-heart" style="color: <?php echo ($fila['user_liked'] > 0) ? '#e74c3c' : '#fff'; ?>;"></i>
-                                <div class="likes-count" id="likes-count-<?php echo $fila['Id_publicacion']; ?>"><?php echo $fila['likes_count']; ?></div>
-                            </button>
+                        <button class="like-btn <?php echo ($fila['user_liked'] > 0) ? 'liked' : ''; ?>" 
+                            onclick="event.stopPropagation(); toggleLike(<?php echo $fila['Id_publicacion']; ?>, this)">
+                            <i class="fas fa-heart" style="color: <?php echo ($fila['user_liked'] > 0) ? '#e74c3c' : '#fff'; ?>;"></i>
+                            <div class="likes-count" id="likes-count-<?php echo $fila['Id_publicacion']; ?>"><?php echo $fila['likes_count']; ?></div>
+                        </button>
 
-                            <button class="comment-btn" onclick="toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
-                                <i class="fas fa-comment"></i> Comentar
-                            </button>
-                            <button class="share-btn" onclick="sharePost(<?php echo $fila['Id_publicacion']; ?>)">
-                                <i class="fas fa-share"></i> Compartir
-                            </button>
+                        <button class="comment-btn" onclick="event.stopPropagation(); toggleCommentBox(<?php echo $fila['Id_publicacion']; ?>)">
+                            <i class="fas fa-comment"></i> Comentar
+                        </button>
+
+                        <button class="share-btn" onclick="event.stopPropagation(); sharePost(<?php echo $fila['Id_publicacion']; ?>)">
+                            <i class="fas fa-share"></i> Compartir
+                        </button>
+
                         </div>
 
                         <div class="opciones-menu">
@@ -184,7 +187,6 @@ if (!$resultado) {
 
 </body>
 </html>
-
 
 
 
