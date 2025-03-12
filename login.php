@@ -67,36 +67,47 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #ecf0f1;
+            font-family: 'Poppins', sans-serif;
+            background: url('recursos/login.png') no-repeat center center fixed;
+            background-color: black;
+            background-size: contain;
             display: flex;
-            justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 0;
+            color: #fff;
         }
 
-        h2 {
-            text-align: center;
-            color: #2c3e50;
+        .container {
+            display: flex;
+            width: 80%;
+            margin: auto;
         }
 
         .login-form {
-            background-color: white;
-            padding: 20px;
+            flex: 1;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            width: 300px;
+            box-shadow: 0 4px 6px rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            max-width: 350px;
+        }
+
+        .login-form h2 {
             text-align: center;
+            color: #fff;
+            margin-bottom: 20px;
         }
 
         .login-form label {
             display: block;
             font-size: 1rem;
-            color: #7f8c8d;
             margin-bottom: 5px;
-            text-align: left;
         }
 
         .login-form input {
@@ -104,16 +115,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             padding: 10px;
             margin-bottom: 15px;
             border-radius: 5px;
-            border: 1px solid #bdc3c7;
+            border: none;
             font-size: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
         }
 
-        .login-form input[type="email"], .login-form input[type="password"] {
-            background-color: #f4f6f8;
+        .login-form input::placeholder {
+            color: #ddd;
         }
 
         .login-form button {
-            background-color: #3498db;
+            background-color:rgb(94, 211, 166);
             color: white;
             padding: 10px 15px;
             border: none;
@@ -124,16 +137,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .login-form button:hover {
-            background-color: #2980b9;
+            background-color:rgb(94, 211, 166);
         }
 
         .login-form p {
             font-size: 0.9rem;
-            color: #7f8c8d;
+            text-align: center;
         }
 
         .login-form a {
-            color: #3498db;
+            color: rgb(94, 211, 166);
             text-decoration: none;
         }
 
@@ -146,29 +159,41 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-size: 0.9rem;
             margin-bottom: 15px;
         }
+        .image-container {
+    position: absolute; /* O usa 'fixed' si quieres que se mantenga siempre visible */
+    top: 20px; /* Ajusta la distancia desde la parte superior */
+    right: 20px; /* Ajusta la distancia desde la derecha */
+}
+
+.image-container img {
+    width: 500px; /* Aumenta el tamaño del logo */
+    height: auto; /* Mantiene la proporción */
+}
+
+}
     </style>
 </head>
 <body>
+    <div class="container">
+        <div class="login-form">
+            <h2>Iniciar Sesión</h2>
 
-    <div class="login-form">
-        <h2>Iniciar Sesión</h2>
+            <?php if (!empty($mensaje)): ?>
+                <p class="error-message"><?php echo $mensaje; ?></p>
+            <?php endif; ?>
 
-        <?php if (!empty($mensaje)): ?>
-            <p class="error-message"><?php echo $mensaje; ?></p>
-        <?php endif; ?>
+            <form action="login.php" method="post">
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" name="email" placeholder="Ingrese su correo" required>
 
-        <form action="login.php" method="post">
-            <label for="email">Correo Electrónico:</label>
-            <input type="email" name="email" required>
+                <label for="password">Contraseña:</label>
+                <input type="password" name="password" placeholder="Ingrese su contraseña" required>
 
-            <label for="password">Contraseña:</label>
-            <input type="password" name="password" required>
+                <button type="submit">Iniciar Sesión</button>
+            </form>
 
-            <button type="submit">Iniciar Sesión</button>
-        </form>
-
-        <p>¿No tienes cuenta? <a href="registro.php">Regístrate aquí</a></p>
-    </div>
+            <p>¿No tienes cuenta? <a href="registro.php">Regístrate aquí</a></p>
+        </div>
 
 </body>
 </html>
