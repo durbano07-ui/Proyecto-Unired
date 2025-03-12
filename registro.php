@@ -9,30 +9,52 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = $_POST["nombre"];
     $apellido = $_POST["apellido"];
     $email = $_POST["email"];
-    $password = password_hash($_POST["password"], PASSWORD_DEFAULT); // Encriptar la contraseña
+    $password = $_POST["password"];
     $biografia = $_POST["biografia"];
 
-    // Manejo de la imagen de perfil
-    $foto_perfil_url = "uploads/default.jpg"; // Imagen por defecto
-    if (isset($_FILES["foto_perfil"]) && $_FILES["foto_perfil"]["error"] == 0) {
-        $directorio_subida = "uploads/";
-        $nombre_archivo = time() . "_" . basename($_FILES["foto_perfil"]["name"]);
-        $ruta_archivo = $directorio_subida . $nombre_archivo;
+    // Validación de la contraseña
+    if (strlen($password) < 8) {
+        $mensaje = "La contraseña debe tener al menos 8 caracteres.";
+    } elseif (!preg_match('/[A-Z]/', $password)) {
+        $mensaje = "La contraseña debe contener al menos una letra mayúscula.";
+    } elseif (!preg_match('/[a-z]/', $password)) {
+        $mensaje = "La contraseña debe contener al menos una letra minúscula.";
+    } elseif (empty($mensaje)) {
+        // Encriptar la contraseña si es válida
+        $password = password_hash($password, PASSWORD_DEFAULT); // Encriptar la contraseña
 
-        if (move_uploaded_file($_FILES["foto_perfil"]["tmp_name"], $ruta_archivo)) {
-            $foto_perfil_url = $ruta_archivo;
+        // Validación del correo electrónico
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $mensaje = "El correo electrónico no es válido.";
+        } elseif (!preg_match('/@gmail\.com$/', $email) && !preg_match('/@hotmail\.com$/', $email)) {
+            $mensaje = "El correo debe ser de Gmail o Hotmail.";
         }
-    }
 
-    // Crear instancia de la base de datos
-    $database = new Database();
-    $usuario = new Usuario($database);
+        // Si todo está bien, proceder con la inserción de datos
+        if (empty($mensaje)) {
+            // Manejo de la imagen de perfil
+            $foto_perfil_url = "uploads/default.jpg"; // Imagen por defecto
+            if (isset($_FILES["foto_perfil"]) && $_FILES["foto_perfil"]["error"] == 0) {
+                $directorio_subida = "uploads/";
+                $nombre_archivo = time() . "_" . basename($_FILES["foto_perfil"]["name"]);
+                $ruta_archivo = $directorio_subida . $nombre_archivo;
 
-    // Intentar registrar el usuario
-    if ($usuario->registrarUsuario($nombre, $apellido, $email, $password, $biografia, $foto_perfil_url)) {
-        $mensaje = "Registro exitoso. <a href='login.php'>Iniciar sesión</a>";
-    } else {
-        $mensaje = "Error en el registro.";
+                if (move_uploaded_file($_FILES["foto_perfil"]["tmp_name"], $ruta_archivo)) {
+                    $foto_perfil_url = $ruta_archivo;
+                }
+            }
+
+            // Crear instancia de la base de datos
+            $database = new Database();
+            $usuario = new Usuario($database);
+
+            // Intentar registrar el usuario
+            if ($usuario->registrarUsuario($nombre, $apellido, $email, $password, $biografia, $foto_perfil_url)) {
+                $mensaje = "Registro exitoso. <a href='login.php'>Iniciar sesión</a>";
+            } else {
+                $mensaje = "Error en el registro.";
+            }
+        }
     }
 }
 ?>
@@ -77,3 +99,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <p>¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a></p>
 </body>
 </html>
+
