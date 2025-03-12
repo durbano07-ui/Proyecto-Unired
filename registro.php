@@ -19,6 +19,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $mensaje = "La contraseña debe contener al menos una letra mayúscula.";
     } elseif (!preg_match('/[a-z]/', $password)) {
         $mensaje = "La contraseña debe contener al menos una letra minúscula.";
+    } elseif (!preg_match('/[0-9]/', $password)) {
+        $mensaje = "La contraseña debe contener al menos un número.";
+    } elseif (!preg_match('/[\W_]/', $password)) {
+        $mensaje = "La contraseña debe contener al menos un símbolo (como @, #, $, etc.).";
     } elseif (empty($mensaje)) {
         // Encriptar la contraseña si es válida
         $password = password_hash($password, PASSWORD_DEFAULT); // Encriptar la contraseña
