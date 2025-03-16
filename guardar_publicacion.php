@@ -9,7 +9,6 @@ $data = json_decode(file_get_contents('php://input'), true);
 $postId = $data['id_publicacion'];
 $userId = $_SESSION['Id_usuario'];
 
-// Obtener el contenido de la publicación original
 $sql = "SELECT Contenido, Imagen_url, Video_url FROM publicaciones WHERE Id_publicacion = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $postId);
@@ -19,7 +18,6 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $post = $result->fetch_assoc();
 
-    // Crear una nueva publicación con el mismo contenido
     $sqlInsert = "INSERT INTO publicaciones (Id_usuario, Contenido, Imagen_url, Video_url, Fecha_Publicacion) 
                   VALUES (?, ?, ?, ?, NOW())";
     $stmtInsert = $conn->prepare($sqlInsert);
@@ -33,7 +31,5 @@ if ($result->num_rows > 0) {
 } else {
     echo json_encode(["success" => false]);
 }
-?>
-
 
 
