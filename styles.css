@@ -336,10 +336,15 @@ button:hover {
 
 /* Ajustes para el contenedor principal */
 .container {
-    margin-left: 280px; /* Aumentado para dar espacio al sidebar de 260px + margen */
-    padding: 20px;
-    max-width: calc(100% - 300px); /* Ajustar el ancho máximo considerando el sidebar */
-    transition: margin-left 0.3s ease; /* Transición suave si el sidebar cambia */
+    margin-left: 280px; /* Mantiene el espacio para el sidebar */
+    width: 600px; /* Ancho fijo similar a Twitter/X */
+    max-width: 600px;
+    padding: 0;
+    border-left: 1px solid #e1e8ed;
+    border-right: 1px solid #e1e8ed;
+}
+#feed {
+    width: 100%;
 }
 
 /* Ajustes para dispositivos móviles */
