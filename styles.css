@@ -2,138 +2,223 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: #15202b;
-    color: #ffffff;
+    background-color: #f8f8f8;
+    color: #333;
     margin: 0;
     padding: 0;
+    line-height: 1.6;
 }
-/* Barra lateral */
+
+/* Estilos del sidebar mejorado */
 .sidebar {
     position: fixed;
     top: 0;
     left: 0;
-    width: 250px;
+    width: 260px;
     height: 100%;
-    background: linear-gradient(135deg, #6a11cb, #2575fc); /* Degradado atractivo */
+    background-color: var(--background-color, #15202B);
     color: white;
-    padding-top: 20px;
-    box-shadow: 2px 0px 10px rgba(0, 0, 0, 0.1); /* Sombra suave */
-    transition: transform 0.3s ease-in-out; /* Animación de transición */
-}
-
-.sidebar ul {
-    list-style-type: none;
     padding: 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
 }
 
-.sidebar ul li {
-    padding: 15px;
-    text-align: left;
-    transition: background-color 0.3s ease;
-}
-
-.sidebar ul li a {
-    color: white;
-    text-decoration: none;
-    font-size: 18px;
+/* Logo */
+.sidebar .logo {
+    padding: 20px;
+    font-size: 24px;
     display: flex;
     align-items: center;
-    padding-left: 20px;
-    transition: padding-left 0.3s ease;
+    justify-content: center;
 }
 
-.sidebar ul li a i {
-    margin-right: 10px;
+.sidebar .logo i {
+    font-size: 28px;
+    color: rgb(94, 211, 166);
+}
+
+/* Ítems de navegación */
+.sidebar .nav-items {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+    flex-grow: 1;
+}
+
+.sidebar .nav-items li {
+    padding: 0;
+    margin: 5px 0;
+}
+
+.sidebar .nav-items li a {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    padding: 15px 20px;
+    border-radius: 30px;
+    margin: 0 10px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar .nav-items li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-items li a i {
     font-size: 20px;
-    transition: transform 0.3s ease;
+    width: 25px;
+    margin-right: 15px;
 }
 
-/* Efecto hover en los enlaces */
-.sidebar ul li a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
-    padding-left: 30px; /* Desplazamiento al hacer hover */
+.sidebar .nav-items li a span {
+    font-size: 18px;
+    font-weight: 500;
 }
 
-.sidebar ul li a:hover i {
-    transform: rotate(360deg); /* Efecto de rotación en los íconos */
+/* Perfil de usuario en el sidebar */
+.sidebar .user-profile {
+    margin-top: auto;
+    padding: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-/* Barra lateral visible y animada */
-.sidebar:hover {
-    transform: translateX(0);
+.sidebar .user-link {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    flex-grow: 1;
 }
 
-/* Agregar espacio al contenido */
-.container {
-    margin-left: 270px; /* Dejamos espacio para la barra lateral */
-    padding: 20px;
-    transition: margin-left 0.3s ease;
+.sidebar .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
 }
 
-/* Diseño responsive */
+.sidebar .user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .user-name {
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.sidebar .user-handle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebar .logout-icon {
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.sidebar .logout-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Añadir un color específico para Unired */
+.sidebar .nav-items li a i, 
+.sidebar .logo i {
+    color: rgb(94, 211, 166);
+}
+
+/* Responsive - sidebar colapsable */
 @media screen and (max-width: 768px) {
     .sidebar {
-        width: 200px;
-        background: linear-gradient(135deg, #6a11cb, #2575fc); /* Aseguramos que el fondo sea el mismo */
+        width: 70px;
     }
-
-    .sidebar ul li {
-        padding: 12px;
+    
+    .sidebar .nav-items li a span,
+    .sidebar .user-info {
+        display: none;
     }
-
-    .sidebar ul li a {
-        font-size: 16px;
+    
+    .sidebar .nav-items li a {
+        justify-content: center;
+        padding: 15px 0;
     }
-
+    
+    .sidebar .nav-items li a i {
+        margin-right: 0;
+    }
+    
+    .sidebar .user-profile {
+        justify-content: center;
+    }
+    
+    .sidebar .user-avatar {
+        margin-right: 0;
+    }
+    
+    .sidebar .logout-icon {
+        display: none;
+    }
+    
     .container {
-        margin-left: 220px;
+        margin-left: 70px;
     }
 }
 
-
-.container {
-    width: 50%;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: #192734;
-    border-radius: 8px;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-}
 
 h2, h3 {
     text-align: center;
-    color: #ffffff;
+    color: #2f3e47;
+    font-weight: 600;
+    font-size: 28px;
+    margin-bottom: 20px;
 }
 
 /* Contenedor de la publicación */
 .publicacion {
-    position: relative; /* Asegura que los elementos dentro de .publicacion se posicionen de manera relativa */
-    background-color: #253341;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    position: relative;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease-in-out;
 }
 
-/* Asegura que el menú de opciones (y el botón de tres puntos) estén en la parte superior derecha */
+.publicacion:hover {
+    background-color: #eef2f4;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegura que el menú de opciones esté en la parte superior derecha */
 .opciones-menu {
-    position: absolute;  /* Asegura que se posicione dentro de .publicacion */
+    position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 1000;  /* Asegura que el menú se apile sobre otros elementos */
+    z-index: 1000;
 }
 
 /* Botón de tres puntos */
 .opciones-btn {
     background: transparent;
     border: none;
-    font-size: 20px;
-    color: #ffffff;
+    font-size: 22px;
+    color: #2f3e47;
     cursor: pointer;
     padding: 5px;
 }
 
-/* Opciones del menú oculto */
 .opciones-lista {
     display: none;
     background-color: #e04b4b;
@@ -144,10 +229,8 @@ h2, h3 {
     top: 25px;
     right: 0;
     min-width: 150px;
-    z-index: 1001;  /* Asegura que se muestre encima del contenido */
 }
 
-/* Estilo para los botones dentro del menú */
 .opciones-lista button {
     width: 100%;
     background-color: #eb0f0f;
@@ -156,30 +239,15 @@ h2, h3 {
     cursor: pointer;
     text-align: left;
     font-size: 14px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
 }
 
 .opciones-lista button:hover {
     background-color: #f1f1f1;
 }
 
-
-
-.publicacion:hover {
-    background-color: #1c2938;
-}
-
-.publicacion p {
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-.publicacion img, .publicacion video {
-    max-width: 100%;
-    border-radius: 8px;
-    margin-top: 10px;
-}
-
-/* Botones de interacción */
+/* Estilos de interacción */
 .acciones {
     display: flex;
     justify-content: space-around;
@@ -189,55 +257,45 @@ h2, h3 {
 .acciones button {
     background: none;
     border: none;
-    color: #ffffff;
+    color: #4a90e2;
     cursor: pointer;
     font-size: 14px;
     display: flex;
     align-items: center;
-    flex-direction: column; /* Esto hará que los elementos se apilen verticalmente */
-    justify-content: center;
     gap: 5px;
     transition: all 0.3s ease;
-}
-
-.acciones button .likes-count {
-    font-size: 12px; /* Tamaño del texto del número de likes */
-    color: #ffffff;
-    margin-top: 5px; /* Separación entre el icono y el número */
 }
 
 .acciones button:hover {
     color: #1da1f2;
 }
 
-.like-btn.liked {
-    color: #e74c3c;
-}
-
-.likes-count {
-    margin-top: 5px;
+.acciones button .likes-count {
     font-size: 12px;
-    color: #ffffff;
+    color: #4a90e2;
 }
 
 /* Formulario de publicación */
 form {
-    background-color: #253341;
-    padding: 15px;
-    border-radius: 8px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
     margin-bottom: 20px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
 textarea {
     width: 100%;
     height: 80px;
     border-radius: 5px;
-    border: 1px solid #38444d;
+    border: 1px solid #dcdcdc;
     padding: 10px;
-    background-color: #192734;
-    color: #ffffff;
+    background-color: #f9f9f9;
+    color: #333;
+    margin-bottom: 15px;
 }
 
+/* Botones */
 button {
     background-color: #1da1f2;
     color: white;
@@ -245,13 +303,14 @@ button {
     padding: 10px 15px;
     border-radius: 5px;
     cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 button:hover {
     background-color: #0d8ddf;
 }
 
-/* Botón flotante para publicar */
+/* Botón flotante */
 .floating-btn {
     position: fixed;
     bottom: 20px;
@@ -263,56 +322,74 @@ button:hover {
     font-size: 20px;
     cursor: pointer;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
 }
 
 .floating-btn:hover {
     background-color: #0d8ddf;
+    transform: scale(1.1);
 }
-.custom-file-upload {
-    display: inline-block;
-    padding: 10px 15px;
-    cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    border-radius: 5px;
-    margin: 5px;
-    font-size: 16px;
-    text-align: center;
+.header-left {
+    display: flex;
+    align-items: center;
 }
 
-.custom-file-upload i {
-    margin-right: 5px;
+/* Ajustes para el contenedor principal */
+.container {
+    margin-left: 280px; /* Aumentado para dar espacio al sidebar de 260px + margen */
+    padding: 20px;
+    max-width: calc(100% - 300px); /* Ajustar el ancho máximo considerando el sidebar */
+    transition: margin-left 0.3s ease; /* Transición suave si el sidebar cambia */
 }
 
-.custom-file-upload:hover {
-    background-color: #0056b3;
-}
-.file-label {
-    display: inline-block;
-    padding: 10px;
-    margin: 5px;
-    background-color: #007bff;
-    color: white;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: background 0.3s;
+/* Ajustes para dispositivos móviles */
+@media screen and (max-width: 768px) {
+    .container {
+        margin-left: 80px; /* Ajustar para el sidebar colapsado */
+        max-width: calc(100% - 100px);
+    }
 }
 
-.file-label:hover {
-    background-color: #0056b3;
+/* Asegurarse de que el contenido se vea bien */
+.publicacion {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Evitar desbordamiento de contenido */
 }
 
-.file-label i {
-    margin-right: 5px;
+/* Ajustar imágenes dentro de las publicaciones */
+.publicacion img {
+    max-width: 100%;
+    height: auto;
 }
-/* Estilo para el contenedor de la publicación */
-.feed {
-    position: relative; /* Asegura que los elementos dentro de la publicación se posicionen de manera relativa */
+/* Corrección para asegurar que las fotos de perfil sean círculos perfectos */
+.foto-perfil,
+.sidebar .user-avatar,
+.post-avatar,
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff; /* Opcional: añade un borde para resaltar */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: sombra suave */
+    overflow: hidden; /* Asegura que el contenido no desborde del círculo */
+    flex-shrink: 0; /* Evita que la imagen se comprima */
+    aspect-ratio: 1/1; /* Asegura una relación de aspecto cuadrada */
 }
 
+/* Ajustes específicos para diferentes tamaños */
+.sidebar .user-avatar {
+    width: 40px;
+    height: 40px;
+}
 
+.post-avatar {
+    width: 48px;
+    height: 48px;
+}
 
-.opciones-lista button:hover {
-    background-color: #f1f1f1;
+.comment-avatar {
+    width: 36px;
+    height: 36px;
 }
