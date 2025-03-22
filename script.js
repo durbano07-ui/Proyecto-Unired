@@ -1,61 +1,71 @@
-$(document).ready(function() {
-    function cargarUsuarios() {
-        $.ajax({
-            url: 'get_usuarios.php',
-            method: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                $('#lista-usuarios').empty();
-                response.usuarios.forEach(usuario => {
-                    $('#lista-usuarios').append(
-                        `<li data-id="${usuario.id_usuario}" class="usuario">${usuario.nombre}</li>`
-                    );
-                });
-            }
-        });
+function editarPublicacion(postId) {
+    console.log("Editando publicación: " + postId); // Añadir logs para depuración
+    
+    // Obtener el contenido actual de la publicación
+    const postContent = document.querySelector(`#post_${postId} .post-content`);
+    const contenidoTexto = document.querySelector(`#post_${postId} .post-content p`).textContent.trim();
+    
+    // Guardar el contenido original
+    const contenidoOriginal = postContent.innerHTML;
+    
+    // Crear y mostrar el formulario de edición
+    const editarHTML = `
+        <div class="editar-form">
+            <textarea id="editar-input-${postId}" class="editar-input">${contenidoTexto}</textarea>
+            <div class="editar-buttons">
+                <button onclick="guardarEdicion(${postId}, '${encodeURIComponent(contenidoOriginal)}')">Guardar</button>
+                <button onclick="cancelarEdicion(${postId}, '${encodeURIComponent(contenidoOriginal)}')">Cancelar</button>
+            </div>
+            <p class="tiempo-info">Solo puedes editar publicaciones dentro de las primeras 2 horas.</p>
+        </div>
+    `;
+    
+    // Reemplazar el contenido con el formulario de edición
+    postContent.innerHTML = editarHTML;
+}
+
+function guardarEdicion(postId, contenidoOriginalEncoded) {
+    const contenidoOriginal = decodeURIComponent(contenidoOriginalEncoded);
+    const contenido = document.getElementById(`editar-input-${postId}`).value.trim();
+    
+    if (contenido === '') {
+        alert('El contenido no puede estar vacío');
+        return;
     }
-
-    function cargarMensajes(id_destinatario) {
-        $.ajax({
-            url: 'mostrar_mensaje.php',
-            method: 'GET',
-            data: { id_destinatario },
-            dataType: 'json',
-            success: function(response) {
-                $('#mensajes').empty();
-                response.mensajes.forEach(mensaje => {
-                    $('#mensajes').append(`<div><strong>${mensaje.remitente}:</strong> ${mensaje.contenido}</div>`);
-                });
-            }
-        });
-    }
-
-    $(document).on('click', '.usuario', function() {
-        var id_destinatario = $(this).data('id');
-        $('#id_destinatario').val(id_destinatario);
-        cargarMensajes(id_destinatario);
+    
+    fetch('editar_publicacion.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            id_publicacion: postId,
+            contenido: contenido
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar la página para reflejar los cambios
+            window.location.reload();
+        } else {
+            alert(data.message);
+            // Restaurar el contenido original en caso de error
+            const postContent = document.querySelector(`#post_${postId} .post-content`);
+            postContent.innerHTML = contenidoOriginal;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ocurrió un error al actualizar la publicación');
+        // Restaurar el contenido original en caso de error
+        const postContent = document.querySelector(`#post_${postId} .post-content`);
+        postContent.innerHTML = contenidoOriginal;
     });
+}
 
-    $('#form-mensaje').on('submit', function(e) {
-        e.preventDefault();
-        var formData = new FormData(this);
-        $.ajax({
-            url: 'enviar_mensaje.php',
-            method: 'POST',
-            data: formData,
-            contentType: false,
-            processData: false,
-            success: function() {
-                cargarMensajes($('#id_destinatario').val());
-                $('#contenido').val('');
-            }
-        });
-    });
-
-    setInterval(() => {
-        var id_destinatario = $('#id_destinatario').val();
-        if (id_destinatario) cargarMensajes(id_destinatario);
-    }, 5000);
-
-    cargarUsuarios();
-});
+function cancelarEdicion(postId, contenidoOriginalEncoded) {
+    const contenidoOriginal = decodeURIComponent(contenidoOriginalEncoded);
+    const postContent = document.querySelector(`#post_${postId} .post-content`);
+    postContent.innerHTML = contenidoOriginal;
+}
