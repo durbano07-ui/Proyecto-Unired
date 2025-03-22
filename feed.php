@@ -70,13 +70,31 @@ if (!$resultado) {
 </head>
 <body>
 <div class="sidebar">
-    <ul>
-        <li><a href="mensajes/msg.html">Mensajes</a></li>
-        <li><a href="notificaciones.php">Notificaciones</a></li>
-        <li><a href="perfil.php">Mi Perfil</a></li>
-        <li><a href="configuracion.php">Configuración</a></li>
-        <li><a href="logout.php">Cerrar Sesión</a></li>
+    <div class="logo">
+        <i class="fas fa-share-nodes"></i>
+    </div>
+    
+    <ul class="nav-items">
+        <li><a href="feed.php"><i class="fas fa-home"></i> <span>Inicio</span></a></li>
+        <li><a href="explore.php"><i class="fas fa-search"></i> <span>Explorar</span></a></li>
+        <li><a href="notificaciones.php"><i class="fas fa-bell"></i> <span>Notificaciones</span></a></li>
+        <li><a href="mensajes/msg.html"><i class="fas fa-envelope"></i> <span>Mensajes</span></a></li>
+        <li><a href="guardados.php"><i class="fas fa-bookmark"></i> <span>Guardados</span></a></li>
+        <li><a href="comunidades.php"><i class="fas fa-users"></i> <span>Comunidades</span></a></li>
+        <li><a href="perfil.php"><i class="fas fa-user"></i> <span>Perfil</span></a></li>
+        <li><a href="configuracion.php"><i class="fas fa-cog"></i> <span>Configuración</span></a></li>
     </ul>
+    
+    <div class="user-profile">
+        <a href="perfil.php" class="user-link">
+            <img src="<?php echo isset($_SESSION['foto_perfil']) ? $_SESSION['foto_perfil'] : 'uploads/default.jpg'; ?>" alt="Perfil" class="user-avatar">
+            <div class="user-info">
+                <div class="user-name"><?php echo $_SESSION['nombre']; ?></div>
+                <div class="user-handle">@<?php echo strtolower($_SESSION['nombre']); ?></div>
+            </div>
+        </a>
+        <a href="logout.php" class="logout-icon"><i class="fas fa-sign-out-alt"></i></a>
+    </div>
 </div>
 
 <div class="container">
@@ -102,15 +120,14 @@ if (!$resultado) {
     <h3>Publicaciones</h3>
     <div id="feed">
         <?php while ($fila = $resultado->fetch_assoc()) {
-            $foto_perfil = isset($fila['Foto_Perfil']) && !empty($fila['Foto_Perfil']) ? $fila['Foto_Perfil'] : '/uploads/Foto_predeterminada.jpg';
-            $ruta_base = $_SERVER['DOCUMENT_ROOT'];
-            $ruta_completa = $ruta_base . "/" . $foto_perfil;
+            $foto_perfil = isset($fila['Foto_Perfil']) && !empty($fila['Foto_Perfil']) ? $fila['Foto_Perfil'] : 'uploads/default.jpg';
+            
         ?>
             <div class='publicacion' id='post_<?php echo $fila['Id_publicacion']; ?>'>
                 <div class="post-content" onclick="window.location.href='detalle.php?id=<?php echo $fila['Id_publicacion']; ?>'">
                     <div class="header">
                         <div class="header-left">
-                            <img src="<?php echo htmlspecialchars($ruta_completa); ?>" alt="Foto de perfil" class="foto-perfil">
+                        <img src="<?php echo htmlspecialchars($foto_perfil); ?>" alt="Foto de perfil" class="foto-perfil">
                             <p><strong><a href="perfil.php?id=<?php echo $fila['Id_usuario']; ?>" onclick="event.stopPropagation();"><?php echo htmlspecialchars($fila['Nombre']); ?></a></strong></p>
                             <small><?php echo $fila['Fecha_Publicacion']; ?></small>
                         </div>
@@ -147,13 +164,14 @@ if (!$resultado) {
                     <button class="opciones-btn" onclick="event.stopPropagation(); toggleOpciones(<?php echo $fila['Id_publicacion']; ?>)">
                         <i class="fas fa-ellipsis-h"></i>
                     </button>
-                    <div class="opciones-lista" id="opciones-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
-                        <button onclick="event.stopPropagation(); eliminarPublicacion(<?php echo $fila['Id_publicacion']; ?>)">Eliminar</button>
-                        <button onclick="event.stopPropagation(); editarPublicacion(<?php echo $fila['Id_publicacion']; ?>)">Editar</button>
+                <div class="opciones-lista" id="opciones-<?php echo $fila['Id_publicacion']; ?>" style="display:none;">
+                        <?php if ($fila['Id_usuario'] == $_SESSION['Id_usuario']): ?>
+                            <button onclick="event.stopPropagation(); eliminarPublicacion(<?php echo $fila['Id_publicacion']; ?>)">Eliminar</button>
+                            <button onclick="event.stopPropagation(); editarPublicacion(<?php echo $fila['Id_publicacion']; ?>)">Editar</button>
+                        <?php endif; ?>
                         <button onclick="event.stopPropagation(); guardarPublicacion(<?php echo $fila['Id_publicacion']; ?>)">Guardar</button>
                     </div>
                 </div>
-
                 <div class="comments" id="comments_<?php echo $fila['Id_publicacion']; ?>" onclick="event.stopPropagation();">
                     <?php
                     $comentariosQuery = "SELECT c.Id_comentario, c.Contenido_C, c.Fecha_Comentario, u.Nombre 
