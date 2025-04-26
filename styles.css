@@ -1,0 +1,558 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f8f8;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+/* Estilos del sidebar mejorado */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 260px;
+    height: 100%;
+    background-color: var(--background-color, #15202B);
+    color: white;
+    padding: 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+}
+
+/* Logo */
+.sidebar .logo {
+    padding: 20px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sidebar .logo i {
+    font-size: 28px;
+    color: rgb(94, 211, 166);
+}
+
+/* Ítems de navegación */
+.sidebar .nav-items {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+    flex-grow: 1;
+}
+
+.sidebar .nav-items li {
+    padding: 0;
+    margin: 5px 0;
+}
+
+.sidebar .nav-items li a {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    padding: 15px 20px;
+    border-radius: 30px;
+    margin: 0 10px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar .nav-items li a:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar .nav-items li a i {
+    font-size: 20px;
+    width: 25px;
+    margin-right: 15px;
+}
+
+.sidebar .nav-items li a span {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+/* Perfil de usuario en el sidebar */
+.sidebar .user-profile {
+    margin-top: auto;
+    padding: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sidebar .user-link {
+    display: flex;
+    align-items: center;
+    color: white;
+    text-decoration: none;
+    flex-grow: 1;
+}
+
+.sidebar .user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+    object-fit: cover;
+}
+
+.sidebar .user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar .user-name {
+    font-weight: bold;
+    font-size: 15px;
+}
+
+.sidebar .user-handle {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sidebar .logout-icon {
+    color: white;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+}
+
+.sidebar .logout-icon:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Añadir un color específico para Unired */
+.sidebar .nav-items li a i, 
+.sidebar .logo i {
+    color: rgb(94, 211, 166);
+}
+
+/* Responsive - sidebar colapsable */
+@media screen and (max-width: 768px) {
+    .sidebar {
+        width: 70px;
+    }
+    
+    .sidebar .nav-items li a span,
+    .sidebar .user-info {
+        display: none;
+    }
+    
+    .sidebar .nav-items li a {
+        justify-content: center;
+        padding: 15px 0;
+    }
+    
+    .sidebar .nav-items li a i {
+        margin-right: 0;
+    }
+    
+    .sidebar .user-profile {
+        justify-content: center;
+    }
+    
+    .sidebar .user-avatar {
+        margin-right: 0;
+    }
+    
+    .sidebar .logout-icon {
+        display: none;
+    }
+    
+    .container {
+        margin-left: 70px;
+    }
+}
+
+
+h2, h3 {
+    text-align: center;
+    color: #2f3e47;
+    font-weight: 600;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+/* Contenedor de la publicación */
+.publicacion {
+    position: relative;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+}
+
+.publicacion:hover {
+    background-color: #eef2f4;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Asegura que el menú de opciones esté en la parte superior derecha */
+.opciones-menu {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
+
+/* Botón de tres puntos */
+.opciones-btn {
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    color: #2f3e47;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.opciones-lista {
+    display: none;
+    background-color: #e04b4b;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    padding: 10px;
+    position: absolute;
+    top: 25px;
+    right: 0;
+    min-width: 150px;
+}
+
+.opciones-lista button {
+    width: 100%;
+    background-color: #eb0f0f;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+    border-radius: 5px;
+    transition: background 0.3s ease;
+}
+
+.opciones-lista button:hover {
+    background-color: #f1f1f1;
+}
+
+/* Estilos de interacción */
+.acciones {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 10px;
+}
+
+.acciones button {
+    background: none;
+    border: none;
+    color: #4a90e2;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s ease;
+}
+
+.acciones button:hover {
+    color: #1da1f2;
+}
+
+.acciones button .likes-count {
+    font-size: 12px;
+    color: #4a90e2;
+}
+
+/* Formulario de publicación */
+form {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+    border-radius: 5px;
+    border: 1px solid #dcdcdc;
+    padding: 10px;
+    background-color: #f9f9f9;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* Botones */
+button {
+    background-color: #1da1f2;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0d8ddf;
+}
+
+/* Botón flotante */
+.floating-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #1da1f2;
+    color: white;
+    border-radius: 50%;
+    padding: 15px 20px;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.floating-btn:hover {
+    background-color: #0d8ddf;
+    transform: scale(1.1);
+}
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+/* Ajustes para el contenedor principal */
+.container {
+    margin: 0 auto; /* Mantiene el espacio para el sidebar */
+    width: 600px; /* Ancho fijo similar a Twitter/X */
+    max-width: 600px;
+    padding: 0;
+    border-left: 1px solid #e1e8ed;
+    border-right: 1px solid #e1e8ed;
+}
+#feed {
+    width: 100%;
+}
+
+/* Ajustes para dispositivos móviles */
+@media screen and (max-width: 768px) {
+    .container {
+        margin-left: 80px; /* Ajustar para el sidebar colapsado */
+        max-width: calc(100% - 100px);
+    }
+}
+
+/* Asegurarse de que el contenido se vea bien */
+.publicacion {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* Evitar desbordamiento de contenido */
+}
+
+/* Ajustar imágenes dentro de las publicaciones */
+.publicacion img {
+    max-width: 100%;
+    height: auto;
+}
+/* Corrección para asegurar que las fotos de perfil sean círculos perfectos */
+.foto-perfil,
+.sidebar .user-avatar,
+.post-avatar,
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff; /* Opcional: añade un borde para resaltar */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Opcional: sombra suave */
+    overflow: hidden; /* Asegura que el contenido no desborde del círculo */
+    flex-shrink: 0; /* Evita que la imagen se comprima */
+    aspect-ratio: 1/1; /* Asegura una relación de aspecto cuadrada */
+}
+
+/* Ajustes específicos para diferentes tamaños */
+.sidebar .user-avatar {
+    width: 40px;
+    height: 40px;
+}
+
+.post-avatar {
+    width: 48px;
+    height: 48px;
+}
+
+.comment-avatar {
+    width: 36px;
+    height: 36px;
+}
+/* Mejoras para la cabecera de publicaciones */
+.publicacion .header {
+    margin-bottom: 15px;
+}
+
+.publicacion .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Añade espacio entre los elementos */
+}
+
+.publicacion .foto-perfil {
+    margin-right: 5px;
+}
+
+/* Contenedor para nombre y fecha */
+.publicacion .user-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.publicacion .user-name {
+    font-weight: 600;
+    font-size: 16px;
+    color: #333; /* Color oscuro en lugar de azul */
+    text-decoration: none;
+}
+
+.publicacion .user-name:hover {
+    text-decoration: underline;
+    color: #1da1f2; /* Color azul solo al pasar el cursor */
+}
+
+.publicacion .post-time {
+    font-size: 14px;
+    color: #657786; /* Color gris para la fecha */
+    margin-top: 2px;
+}
+
+/* Eliminar la línea debajo del nombre */
+.publicacion .header-left p {
+    margin: 0;
+    padding: 0;
+}
+
+/* Ajuste general del contenido */
+.publicacion .post-content {
+    cursor: pointer;
+}
+/* Estilos para la sección de botones de carga */
+.upload-options {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.file-label, .evento-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.file-label {
+    background-color: #f0f2f5;
+    color: #1da1f2;
+}
+
+.evento-label {
+    background-color: #f0f2f5;
+    color: #5e8dd3;
+    border: none;
+}
+
+.file-label:hover, .evento-label:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.file-label i, .evento-label i {
+    font-size: 18px;
+}
+
+/* Estilos para el formulario de evento */
+#evento-form {
+    background-color: #f8f9fa;
+    border: 1px solid #e1e8ed;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.evento-field {
+    margin-bottom: 12px;
+}
+
+.evento-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #2f3e47;
+    font-size: 14px;
+}
+
+.evento-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e1e8ed;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.evento-textarea {
+    width: 100%;
+    height: 80px;
+    padding: 10px;
+    border: 1px solid #e1e8ed;
+    border-radius: 5px;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.evento-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 12px;
+}
+
+.evento-row .evento-field {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.cancel-evento-btn {
+    background-color: #f0f2f5;
+    color: #657786;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.cancel-evento-btn:hover {
+    background-color: #e1e8ed;
+}
+
+/* Botón de publicar cuando es un evento */
+.publicar-evento {
+    background-color: #5e8dd3 !important;
+}
