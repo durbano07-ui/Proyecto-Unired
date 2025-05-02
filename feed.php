@@ -556,39 +556,28 @@ if (!$resultado) {
 <!-- Script específico para hacer funcionar el botón de eventos -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Manejar clic en el botón de evento
     const eventoBtn = document.getElementById('eventoBtn');
     const eventoForm = document.getElementById('evento-form');
     const tipoInput = document.getElementById('tipo-publicacion');
     const submitBtn = document.getElementById('submitBtn');
     const cancelBtn = document.getElementById('cancelEventoBtn');
     
-    console.log('Inicializando eventos de formulario...');
-    console.log('Botón de evento:', eventoBtn);
-    console.log('Formulario de evento:', eventoForm);
-    
-    // Función para mostrar el formulario de eventos
     function mostrarFormularioEvento() {
         eventoForm.style.display = 'block';
-        tipoInput.value = 'evento';
+        tipoInput.value = 'evento';  // Cambia esto a 'evento'
         submitBtn.textContent = 'Publicar evento';
         submitBtn.classList.add('publicar-evento');
-        console.log('Formulario de evento mostrado');
     }
     
-    // Función para ocultar el formulario de eventos
     function ocultarFormularioEvento() {
         eventoForm.style.display = 'none';
         tipoInput.value = 'normal';
         submitBtn.textContent = 'Publicar';
         submitBtn.classList.remove('publicar-evento');
-        console.log('Formulario de evento ocultado');
     }
     
-    // Configurar evento para el botón de evento
     if (eventoBtn) {
         eventoBtn.addEventListener('click', function() {
-            console.log('Botón de evento clickeado');
             if (eventoForm.style.display === 'none' || eventoForm.style.display === '') {
                 mostrarFormularioEvento();
             } else {
@@ -597,6 +586,66 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', ocultarFormularioEvento);
+    }
+    
+    const form = document.getElementById('publish-form');
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            // Validar solo si es de tipo evento
+            if (tipoInput.value === 'evento') {
+                const titulo = document.getElementById('evento_titulo').value.trim();
+                const fecha = document.getElementById('evento_fecha').value.trim();
+                
+                // Campos obligatorios
+                let camposValidos = true;
+                
+                // Validar título
+                if (!titulo) {
+                    document.getElementById('evento_titulo').classList.add('campo-requerido');
+                    camposValidos = false;
+                }
+                
+                // Validar fecha
+                if (!fecha) {
+                    document.getElementById('evento_fecha').classList.add('campo-requerido');
+                    camposValidos = false;
+                }
+                
+                if (!camposValidos) {
+                    event.preventDefault();
+                    
+                    // Mostrar mensaje de error
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'error-message';
+                    errorMsg.innerHTML = '<i class="fas fa-exclamation-circle"></i> Para crear un evento, necesitas al menos indicar un título y una fecha.';
+                    
+                    // Eliminar mensaje anterior si existe
+                    const oldError = document.querySelector('.error-message');
+                    if (oldError) {
+                        oldError.remove();
+                    }
+                    
+                    // Insertar mensaje antes del botón de envío
+                    form.insertBefore(errorMsg, submitBtn);
+                    
+                    // Scroll hacia el mensaje de error
+                    errorMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    return false;
+                }
+            }
+        });
+    }
+    
+    // Quitar resaltado de error al escribir
+    document.querySelectorAll('.evento-input').forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('campo-requerido');
+        });
+    });
+});
     // Configurar evento para el botón de cancelar
     if (cancelBtn) {
         cancelBtn.addEventListener('click', ocultarFormularioEvento);
